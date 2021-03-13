@@ -1,31 +1,23 @@
-type Thought {
-  id: ID!
-  title: String!
-  body: String!
-  imageURL: String
-  user: User!
-}
-
-type User {
-  id: ID!
-  name: String!
-  email: String!
+type Post {
+    id: String!
+    title: String!
+    body: String!
+    Agree: Int!
+    Disagree: Int!
 }
 
 type Query {
-  thoughts: [Thought!]!
-  thought(id: Int!): Thought
+    posts: [Post!]!
+    post(id: Int!): Post
 }
 
-input NewThought {
-  title: String!
-  body: String!
-  imageURL: String
-  userId: Int!
+input PostDTO {
+    title: String!
+    body: String!
 }
 
 type Mutation {
-  createThought(input: NewThought!): Thought!
-  updateThought(id: Int!, userId: Int!, input: NewThought!): Thought
-  deleteThought(id: Int!, userId: Int!): Thought
+    createPost(input: PostDTO!, access: String!): Post
+    updatePost(id: Int!, input: PostDTO!, access: String!): Post
+    deletePost(id: Int!, access: String!): Post
 }

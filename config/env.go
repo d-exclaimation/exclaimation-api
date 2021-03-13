@@ -27,3 +27,13 @@ func GetPort() string {
 	}
 	return port
 }
+
+const devToken = "lol"
+
+func GetAccessToken() string {
+	token := os.Getenv("ACCESS_TOKEM")
+	if token == "" || len(token) < 1 {
+		token = devToken
+	}
+	return token
+}

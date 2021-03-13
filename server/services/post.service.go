@@ -12,40 +12,43 @@ import (
 	"github.com/d-exclaimation/exclaimation-gql/db/entities"
 	"github.com/d-exclaimation/exclaimation-gql/graph/model"
 	"github.com/d-exclaimation/exclaimation-gql/server/errors"
+	"gopkg.in/gorp.v1"
 )
 
 // PostService Struct
 type PostService struct {
+	rp *gorp.DbMap
 }
 
 // Fx Provider
-func PostServiceProvider() *PostService {
+func PostServiceProvider(rp *gorp.DbMap) *PostService {
 	return &PostService{
+		rp: rp,
 	}
 }
 
 // Methods
-func (srv *PostService) CreateNew(input model.NewThought) (*entities.Thought, *errors.ServiceError) {
+func (srv *PostService) CreateNew(input model.PostDto) (*entities.Post, *errors.ServiceError) {
 	// TODO: Delete One Item
 	panic("Not implemented")
 }
 
-func (srv *PostService) GetAll() (entities.ThoughtsArray, *errors.ServiceError) {
+func (srv *PostService) GetAll() (entities.Posts, *errors.ServiceError) {
 	// TODO: Delete One Item
 	panic("Not implemented")
 }
 
-func (srv *PostService) GetOne(id int) (*entities.Thought, *errors.ServiceError) {
+func (srv *PostService) GetOne(id int) (*entities.Post, *errors.ServiceError) {
 	// TODO: Delete One Item
 	panic("Not implemented")
 }
 
-func (srv *PostService) UpdateOne(id int, userId int, input model.NewThought) (*entities.Thought, *errors.ServiceError) {
+func (srv *PostService) UpdateOne(id int, input model.PostDto) (*entities.Post, *errors.ServiceError) {
 	// TODO: Delete One Item
 	panic("Not implemented")
 }
 
-func (srv *PostService) DeleteOne(id int, userId int) (*entities.Thought, *errors.ServiceError) {
+func (srv *PostService) DeleteOne(id int) (*entities.Post, *errors.ServiceError) {
 	// TODO: Delete One Item
 	panic("Not implemented")
 }
