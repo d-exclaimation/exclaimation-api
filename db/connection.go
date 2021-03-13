@@ -31,6 +31,7 @@ func PostgresProvider(lifecycle fx.Lifecycle) *gorp.DbMap {
 	dbMap := &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
 
 	dbMap.AddTableWithName(entities.Post{}, "posts").SetKeys(true, "Id")
+	dbMap.TraceOff()
 
 	err = dbMap.CreateTablesIfNotExists()
 	if err != nil {

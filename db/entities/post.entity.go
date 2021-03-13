@@ -11,16 +11,17 @@ package entities
 import (
 	"fmt"
 	"github.com/d-exclaimation/exclaimation-gql/graph/model"
+	_ "gopkg.in/gorp.v1"
 	"time"
 )
 
 type Post struct {
 	Id  	  int64  `db:"post_id"`
 	CreatedAt int64  `db:"created_at"`
-	Title 	  string `db:",size:60"`
-	Body	  string `db:",size:1024"`
-	Agrees 	  int
-	Disagree   int
+	Title 	  string `db:"title, size:60"`
+	Body	  string `db:"body,size:1024"`
+	Agrees 	  int	 `db:"agree"`
+	Disagree  int	 `db:"disagree"`
 }
 
 func NewPost(title string, body string) *Post {

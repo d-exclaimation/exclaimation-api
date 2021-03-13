@@ -31,7 +31,7 @@ func GetPort() string {
 const devToken = "lol"
 
 func GetAccessToken() string {
-	token := os.Getenv("ACCESS_TOKEM")
+	token := os.Getenv("ACCESS_TOKEN")
 	if token == "" || len(token) < 1 {
 		token = devToken
 	}

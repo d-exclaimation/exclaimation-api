@@ -40,7 +40,7 @@ func (srv *PostService) CreateNew(input model.PostDto) (*entities.Post, *errors.
 
 func (srv *PostService) GetAll() (entities.Posts, *errors.ServiceError) {
 	var posts entities.Posts
-	_, err := srv.rp.Select(posts, "SELECT * FROM " + string(db.PostsTable) + " order by created_at")
+	_, err := srv.rp.Select(&posts, "SELECT * FROM " + string(db.PostsTable) + " order by created_at")
 	if err != nil {
 		return nil, errors.NewServiceError(http.StatusInternalServerError, "Cannot fetch data from the database")
 	}
@@ -48,11 +48,12 @@ func (srv *PostService) GetAll() (entities.Posts, *errors.ServiceError) {
 }
 
 func (srv *PostService) GetOne(id int) (*entities.Post, *errors.ServiceError) {
-	post := &entities.Post{}
-	if err := srv.rp.SelectOne(post, "SELECT * FROM " + string(db.PostsTable) + " where post_id=?", int64(id)); err != nil {
+	post, err := srv.rp.Get(entities.Post{}, id)
+	if err != nil {
 		return nil, errors.NewServiceError(http.StatusInternalServerError, err.Error())
 	}
-	return post, nil
+
+	return post.(*entities.Post), nil
 }
 
 func (srv *PostService) UpdateOne(id int, input model.PostDto) (*entities.Post, *errors.ServiceError) {

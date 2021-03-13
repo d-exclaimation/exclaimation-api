@@ -12,7 +12,9 @@ import (
 	"context"
 	"github.com/d-exclaimation/exclaimation-gql/config"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"go.uber.org/fx"
+	"log"
 	"net/http"
 )
 
@@ -23,7 +25,11 @@ const (
 
 // Fx Provider
 func AppProvider(lifecycle fx.Lifecycle) *gin.Engine {
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatalln(err)
+	}
 	gin.SetMode(gin.ReleaseMode)
+
 	app := gin.Default()
 	port := config.GetPort()
 
