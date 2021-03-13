@@ -4,6 +4,7 @@ go 1.16
 
 require (
 	github.com/99designs/gqlgen v0.13.0
+	github.com/gin-contrib/cors v1.3.1 // indirect
 	github.com/gin-gonic/gin v1.6.3
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
@@ -20,6 +21,4 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/gorp.v1 v1.7.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/postgres v1.0.8
-	gorm.io/gorm v1.21.2
 )

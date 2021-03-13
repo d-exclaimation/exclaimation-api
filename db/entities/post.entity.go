@@ -15,8 +15,8 @@ import (
 )
 
 type Post struct {
-	Id  	  int64 `db:"post_id"`
-	CreatedAt int64
+	Id  	  int64  `db:"post_id"`
+	CreatedAt int64  `db:"created_at"`
 	Title 	  string `db:",size:60"`
 	Body	  string `db:",size:1024"`
 	Agrees 	  int
