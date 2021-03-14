@@ -18,8 +18,8 @@ import (
 type Post struct {
 	Id  	  int64  `db:"post_id"`
 	CreatedAt int64  `db:"created_at"`
-	Title 	  string `db:"title, size:60"`
-	Body	  string `db:"body,size:1024"`
+	Title 	  string `db:"title"`
+	Body	  string `db:"body"`
 	Agrees 	  int	 `db:"agree"`
 	Disagree  int	 `db:"disagree"`
 }

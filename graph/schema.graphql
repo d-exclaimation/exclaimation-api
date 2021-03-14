@@ -2,8 +2,8 @@ type Post {
     id: String!
     title: String!
     body: String!
-    Agree: Int!
-    Disagree: Int!
+    agree: Int!
+    disagree: Int!
 }
 
 type Query {

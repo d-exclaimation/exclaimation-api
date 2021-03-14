@@ -124,7 +124,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdatePost(childComplexity, args["id"].(int), args["input"].(model.PostDto), args["access"].(string)), true
 
-	case "Post.Agree":
+	case "Post.agree":
 		if e.complexity.Post.Agree == nil {
 			break
 		}
@@ -138,7 +138,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Body(childComplexity), true
 
-	case "Post.Disagree":
+	case "Post.disagree":
 		if e.complexity.Post.Disagree == nil {
 			break
 		}
@@ -246,8 +246,8 @@ var sources = []*ast.Source{
     id: String!
     title: String!
     body: String!
-    Agree: Int!
-    Disagree: Int!
+    agree: Int!
+    disagree: Int!
 }
 
 type Query {
@@ -643,7 +643,7 @@ func (ec *executionContext) _Post_body(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_Agree(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_agree(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -678,7 +678,7 @@ func (ec *executionContext) _Post_Agree(ctx context.Context, field graphql.Colle
 	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_Disagree(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_disagree(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2039,13 +2039,13 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Agree":
-			out.Values[i] = ec._Post_Agree(ctx, field, obj)
+		case "agree":
+			out.Values[i] = ec._Post_agree(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "Disagree":
-			out.Values[i] = ec._Post_Disagree(ctx, field, obj)
+		case "disagree":
+			out.Values[i] = ec._Post_disagree(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

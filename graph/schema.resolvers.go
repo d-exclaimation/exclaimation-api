@@ -5,11 +5,11 @@ package graph
 
 import (
 	"context"
+
 	"github.com/d-exclaimation/exclaimation-gql/graph/generated"
 	"github.com/d-exclaimation/exclaimation-gql/graph/model"
 )
 
-// Create Post Resolver (Handle Access and Handle Invalid Input)
 func (r *mutationResolver) CreatePost(_ context.Context, input model.PostDto, access string) (*model.Post, error) {
 	if err := ResolverAccessHandler(access); err != nil {
 		return nil, err
@@ -23,7 +23,6 @@ func (r *mutationResolver) CreatePost(_ context.Context, input model.PostDto, ac
 	return post.ToGraphQL(), nil
 }
 
-// Update Post Resolver (Handle Access and Handle Invalid Input)
 func (r *mutationResolver) UpdatePost(_ context.Context, id int, input model.PostDto, access string) (*model.Post, error) {
 	if err := ResolverAccessHandler(access); err != nil {
 		return nil, err
