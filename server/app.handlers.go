@@ -11,25 +11,28 @@ package server
 import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/d-exclaimation/exclaimation-gql/graph/generated"
-	"github.com/d-exclaimation/exclaimation-gql/server/middleware"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/d-exclaimation/exclaimation-api/graph/generated"
+	"github.com/d-exclaimation/exclaimation-api/server/middleware"
+	"github.com/gookit/color"
+	"github.com/labstack/echo/v4"
+	em "github.com/labstack/echo/v4/middleware"
 )
 
 // AppHandlers / Controller
 type AppHandlers struct {
-	Middlewares []gin.HandlerFunc
-	GQLHandler  gin.HandlerFunc
-	Playground  gin.HandlerFunc
+	Middlewares []echo.MiddlewareFunc
+	GQLHandler  echo.HandlerFunc
+	Playground  echo.HandlerFunc
 }
 
 // Fx Provider
 func AppHandlersProvider(module generated.Config) *AppHandlers {
 	return &AppHandlers{
-		Middlewares: []gin.HandlerFunc{
-			middleware.GinContextToContextMiddleware(),
-			cors.Default(),
+		Middlewares: []echo.MiddlewareFunc{
+			middleware.EchoContextMiddleware,
+			em.LoggerWithConfig(em.LoggerConfig{
+				Format: "${time_rfc3339_nano} |" + color.NewRGBStyle(color.RGB(200, 200, 200), color.HEX("#20bcaf", true)).Sprint(" ${status} ${method} ") + "| ${latency_human} | >> ${uri}\n",
+			}),
 		},
 		GQLHandler:  GraphqlHandler(module),
 		Playground:  PlaygroundHandler(),
@@ -37,17 +40,19 @@ func AppHandlersProvider(module generated.Config) *AppHandlers {
 }
 
 // GraphQL Query Handler
-func GraphqlHandler(module generated.Config) gin.HandlerFunc {
+func GraphqlHandler(module generated.Config) echo.HandlerFunc {
 	graphqlServer := handler.NewDefaultServer(generated.NewExecutableSchema(module))
-	return func(ctx *gin.Context) {
-		graphqlServer.ServeHTTP(ctx.Writer, ctx.Request)
+	return func(ctx echo.Context) error {
+		graphqlServer.ServeHTTP(ctx.Response().Writer, ctx.Request())
+		return nil
 	}
 }
 
 // Playground Handler
-func PlaygroundHandler() gin.HandlerFunc {
+func PlaygroundHandler() echo.HandlerFunc {
 	playgroundHandler := playground.Handler("Nodes-Graph API Playground", graphqlPath)
-	return func(ctx *gin.Context) {
-		playgroundHandler.ServeHTTP(ctx.Writer, ctx.Request)
+	return func(ctx echo.Context) error {
+		playgroundHandler.ServeHTTP(ctx.Response().Writer, ctx.Request())
+		return nil
 	}
 }

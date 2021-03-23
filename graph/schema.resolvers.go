@@ -5,64 +5,63 @@ package graph
 
 import (
 	"context"
+	"github.com/d-exclaimation/exclaimation-api/server/errors"
 
-	"github.com/d-exclaimation/exclaimation-gql/graph/generated"
-	"github.com/d-exclaimation/exclaimation-gql/graph/model"
+	"github.com/d-exclaimation/exclaimation-api/config"
+	"github.com/d-exclaimation/exclaimation-api/graph/generated"
+	"github.com/d-exclaimation/exclaimation-api/graph/model"
+
 )
 
-func (r *mutationResolver) CreatePost(_ context.Context, input model.PostDto, access string) (*model.Post, error) {
-	if err := ResolverAccessHandler(access); err != nil {
-		return nil, err
+func (r *mutationResolver) NewPost(ctx context.Context, input model.PostDto, key string) (*model.Post, error) {
+	if key != config.GetKey() {
+		return nil, errors.InvalidKeyError()
 	}
 
-	// Get from the service and handle error given
-	post, err := r.srv.CreateNew(input)
+	res, err := r.post.CreateNew(ctx, input)
 	if err != nil {
 		return nil, err.ToGQLError()
 	}
-	return post.ToGraphQL(), nil
+	return res.ToGraphQL(), nil
 }
 
-func (r *mutationResolver) UpdatePost(_ context.Context, id int, input model.PostDto, access string) (*model.Post, error) {
-	if err := ResolverAccessHandler(access); err != nil {
-		return nil, err
+func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input model.PostDto, key string) (*model.Post, error) {
+	if key != config.GetKey() {
+		return nil, errors.InvalidKeyError()
 	}
-
-	// Update to the service and handle error given
-	post, err := r.srv.UpdateOne(id, input)
+	res, err := r.post.UpdateOne(ctx, id, input)
 	if err != nil {
 		return nil, err.ToGQLError()
 	}
-	return post.ToGraphQL(), nil
+	return res.ToGraphQL(), nil
 }
 
-func (r *mutationResolver) DeletePost(_ context.Context, id int, access string) (*model.Post, error) {
-	if err := ResolverAccessHandler(access); err != nil {
-		return nil, err
+func (r *mutationResolver) DeletePost(ctx context.Context, id int, key string) (*model.Post, error) {
+	if key != config.GetKey() {
+		return nil, errors.InvalidKeyError()
 	}
 
-	// Delete to the service and handle error
-	post, err := r.srv.DeleteOne(id)
+	res, err := r.post.DeleteOne(ctx, id)
 	if err != nil {
 		return nil, err.ToGQLError()
 	}
-	return post.ToGraphQL(), nil
+	return res.ToGraphQL(), nil
 }
 
-func (r *queryResolver) Posts(_ context.Context) ([]*model.Post, error) {
-	posts, err := r.srv.GetAll()
+func (r *queryResolver) Post(ctx context.Context, id int) (*model.Post, error) {
+	res, err := r.post.QueryOne(ctx, id)
 	if err != nil {
 		return nil, err.ToGQLError()
 	}
-	return posts.ToGraphQLs(), nil
+	return res.ToGraphQL(), nil
 }
 
-func (r *queryResolver) Post(_ context.Context, id int) (*model.Post, error) {
-	post, err := r.srv.GetOne(id)
+func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
+	res, err := r.post.QueryAll(ctx)
 	if err != nil {
 		return nil, err.ToGQLError()
 	}
-	return post.ToGraphQL(), nil
+	return res.ToGraphQLs(), nil
 }
 
 // Mutation returns generated.MutationResolver implementation.

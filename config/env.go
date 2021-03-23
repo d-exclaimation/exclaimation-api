@@ -13,7 +13,7 @@ import "os"
 func GetDatabaseURL() string {
 	dbURL := os.Getenv("DATABASE_URL")
 	if len(dbURL) < 1 {
-		dbURL = "postgres://127.0.0.1:5432/fxkit?sslmode=disable"
+		dbURL = "postgres://127.0.0.1:5432/dev-site?sslmode=disable"
 	}
 	return dbURL
 }
@@ -28,12 +28,10 @@ func GetPort() string {
 	return port
 }
 
-const devToken = "lol"
-
-func GetAccessToken() string {
-	token := os.Getenv("ACCESS_TOKEN")
-	if token == "" || len(token) < 1 {
-		token = devToken
+func GetKey() string {
+	key := os.Getenv("ACCESS_TOKEN")
+	if key == "" {
+		key = "no-key"
 	}
-	return token
+	return key
 }

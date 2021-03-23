@@ -1,23 +1,10 @@
-type Post {
-    id: String!
-    title: String!
-    body: String!
-    agree: Int!
-    disagree: Int!
-}
-
 type Query {
-    posts: [Post!]!
     post(id: Int!): Post
-}
-
-input PostDTO {
-    title: String!
-    body: String!
+    posts: [Post!]!
 }
 
 type Mutation {
-    createPost(input: PostDTO!, access: String!): Post
-    updatePost(id: Int!, input: PostDTO!, access: String!): Post
-    deletePost(id: Int!, access: String!): Post
+    newPost(input: PostDTO!, key: String!): Post!
+    updatePost(id: Int!, input: PostDTO!, key: String!): Post!
+    deletePost(id: Int!, key: String!): Post!
 }
