@@ -27,16 +27,16 @@ func loggerFormat() string {
 	case config.Prod:
 		hexColor = "#fc038c"
 		method = " ${status} ${method} "
-		endpoint = " >> ${uri}\n"
+		endpoint = " >> ${uri}\n at ${time_rfc3339}\n"
 		break
 	case config.Maintenance:
-		header = "${time_rfc3339_nano} |"
+		header = "${time_rfc3339} |"
 		hexColor = "#6703fc"
 		method = " ${status} "
 		endpoint = "| ${latency_human} |\n"
 		break
 	default:
-		header = "${time_rfc3339_nano} |"
+		header = "${time_rfc3339} |"
 		hexColor = "#20bcaf"
 		method = " ${status} ${method} "
 		endpoint = "| ${latency_human} | >> ${uri}\n"

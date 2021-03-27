@@ -15,19 +15,6 @@ import (
 	"net/http"
 )
 
-func allowedOrigins() []string {
-	switch config.GetServerMode() {
-	case config.Prod:
-		return []string{"http://locahost:3000/"}
-	case config.Dev:
-		return []string{"*"}
-	case config.Maintenance:
-		return []string{}
-	default:
-		return []string{"http://locahost:3000/"}
-	}
-}
-
 func allowedMethods() []string {
 	switch config.GetServerMode() {
 	case config.Prod:
@@ -40,7 +27,8 @@ func allowedMethods() []string {
 func CorsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return em.CORSWithConfig(em.CORSConfig{
 		Skipper:      em.DefaultSkipper,
-		AllowOrigins: allowedOrigins(),
+		AllowCredentials: config.GetServerMode() != config.Maintenance,
+		AllowOrigins: []string{ "http://localhost:3000" },
 		AllowMethods: allowedMethods(),
 	})(next)
 }

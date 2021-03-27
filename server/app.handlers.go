@@ -29,6 +29,7 @@ func AppHandlersProvider(module generated.Config) *AppHandlers {
 		Middlewares: []echo.MiddlewareFunc{
 			middleware.EchoContextMiddleware,
 			middleware.EndPointLoggerMiddleware,
+			middleware.CorsMiddleware,
 		},
 		GQLHandler:  GraphqlHandler(module),
 		Playground:  PlaygroundHandler(),
