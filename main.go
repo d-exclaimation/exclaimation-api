@@ -9,6 +9,7 @@
 package main
 
 import (
+	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/db"
 	"github.com/d-exclaimation/exclaimation-api/graph"
 	"github.com/d-exclaimation/exclaimation-api/server"
@@ -19,6 +20,9 @@ import (
 // Fx Runtime Lifecycle
 func main() {
 	fx.New(
+		fx.Invoke(
+			config.InvokeDotEnv,
+		),
 		fx.Provide(
 			// Server application
 			server.AppProvider,

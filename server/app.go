@@ -11,10 +11,8 @@ package server
 import (
 	"context"
 	"github.com/d-exclaimation/exclaimation-api/config"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/fx"
-	"log"
 )
 
 const (
@@ -24,10 +22,6 @@ const (
 
 // Fx Provider
 func AppProvider(lifecycle fx.Lifecycle) *echo.Echo {
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatalln(err)
-	}
-
 	app := echo.New()
 	port := config.GetPort()
 
