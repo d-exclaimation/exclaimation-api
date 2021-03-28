@@ -15,6 +15,7 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	"github.com/d-exclaimation/exclaimation-api/server/errors"
 	"net/http"
+	"sort"
 )
 
 type PostService struct {
@@ -27,7 +28,7 @@ func PostServiceProvider(client *ent.Client) *PostService {
 	}
 }
 
-func (t *PostService) QueryAll(ctx context.Context) (ent.Posts, *errors.ServiceError) {
+func (t *PostService) QueryAll(ctx context.Context) (ent.Posts, error) {
 	res, err := t.client.
 		Post.Query().
 		All(ctx)
@@ -35,10 +36,11 @@ func (t *PostService) QueryAll(ctx context.Context) (ent.Posts, *errors.ServiceE
 		return make(ent.Posts, 0), errors.NewServiceError(http.StatusInternalServerError, err.Error())
 	}
 
+	sort.Slice(res, func(i, j int) bool { return res[i].ID < res[j].ID })
 	return res, nil
 }
 
-func (t *PostService) QueryOne(ctx context.Context, id int) (*ent.Post, *errors.ServiceError) {
+func (t *PostService) QueryOne(ctx context.Context, id int) (*ent.Post, error) {
 	res, err := t.client.Post.
 		Query().
 		Where(post.ID(id)).
@@ -49,7 +51,7 @@ func (t *PostService) QueryOne(ctx context.Context, id int) (*ent.Post, *errors.
 	return res, nil
 }
 
-func (t *PostService) CreateNew(ctx context.Context, input model.PostDto) (*ent.Post, *errors.ServiceError) {
+func (t *PostService) CreateNew(ctx context.Context, input model.PostDto) (*ent.Post, error) {
 	res, err := t.client.Post.
 		Create().
 		SetTitle(input.Title).
@@ -61,7 +63,7 @@ func (t *PostService) CreateNew(ctx context.Context, input model.PostDto) (*ent.
 	return res, nil
 }
 
-func (t *PostService) UpdateOne(ctx context.Context, id int, input model.PostDto) (*ent.Post, *errors.ServiceError) {
+func (t *PostService) UpdateOne(ctx context.Context, id int, input model.PostDto) (*ent.Post, error) {
 	res, err := t.client.Post.
 		UpdateOneID(id).
 		SetTitle(input.Title).
@@ -73,7 +75,22 @@ func (t *PostService) UpdateOne(ctx context.Context, id int, input model.PostDto
 	return res, nil
 }
 
-func (t *PostService) DeleteOne(ctx context.Context, id int) (*ent.Post, *errors.ServiceError) {
+func (t *PostService) ChangeRave(ctx context.Context, id int, value int) (*ent.Post, error) {
+	prev, err := t.QueryOne(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	res, err := t.client.Post.
+		UpdateOneID(id).
+		SetCrabrave(prev.Crabrave + value).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (t *PostService) DeleteOne(ctx context.Context, id int) (*ent.Post, error) {
 	curr, fail := t.QueryOne(ctx, id)
 	if fail != nil {
 		return nil, fail

@@ -44,9 +44,10 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		DeletePost func(childComplexity int, id int, key string) int
-		NewPost    func(childComplexity int, input model.PostDto, key string) int
-		UpdatePost func(childComplexity int, id int, input model.PostDto, key string) int
+		DeletePost        func(childComplexity int, id int, key string) int
+		IncrementCrabRave func(childComplexity int, id int) int
+		NewPost           func(childComplexity int, input model.PostDto, key string) int
+		UpdatePost        func(childComplexity int, id int, input model.PostDto, key string) int
 	}
 
 	Post struct {
@@ -65,6 +66,7 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	NewPost(ctx context.Context, input model.PostDto, key string) (*model.Post, error)
 	UpdatePost(ctx context.Context, id int, input model.PostDto, key string) (*model.Post, error)
+	IncrementCrabRave(ctx context.Context, id int) (*model.Post, error)
 	DeletePost(ctx context.Context, id int, key string) (*model.Post, error)
 }
 type QueryResolver interface {
@@ -98,6 +100,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeletePost(childComplexity, args["id"].(int), args["key"].(string)), true
+
+	case "Mutation.incrementCrabRave":
+		if e.complexity.Mutation.IncrementCrabRave == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_incrementCrabRave_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.IncrementCrabRave(childComplexity, args["id"].(int)), true
 
 	case "Mutation.newPost":
 		if e.complexity.Mutation.NewPost == nil {
@@ -253,6 +267,7 @@ input PostDTO {
 type Mutation {
     newPost(input: PostDTO!, key: String!): Post!
     updatePost(id: Int!, input: PostDTO!, key: String!): Post!
+    incrementCrabRave(id: Int!): Post!
     deletePost(id: Int!, key: String!): Post!
 }`, BuiltIn: false},
 }
@@ -283,6 +298,21 @@ func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, 
 		}
 	}
 	args["key"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_incrementCrabRave_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+		arg0, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
 	return args, nil
 }
 
@@ -479,6 +509,48 @@ func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().UpdatePost(rctx, args["id"].(int), args["input"].(model.PostDto), args["key"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_incrementCrabRave(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_incrementCrabRave_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().IncrementCrabRave(rctx, args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1967,6 +2039,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "updatePost":
 			out.Values[i] = ec._Mutation_updatePost(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "incrementCrabRave":
+			out.Values[i] = ec._Mutation_incrementCrabRave(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}

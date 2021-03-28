@@ -18,7 +18,7 @@ import (
 func allowedMethods() []string {
 	switch config.GetServerMode() {
 	case config.Prod:
-		return []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodConnect}
+		return []string{http.MethodGet, http.MethodHead, http.MethodPost, http.MethodConnect}
 	default:
 		return []string{http.MethodGet, http.MethodHead, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete}
 	}

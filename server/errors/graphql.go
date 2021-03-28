@@ -9,14 +9,10 @@
 package errors
 
 import (
-	"github.com/vektah/gqlparser/v2/gqlerror"
 	"net/http"
 )
 
-func (err *ServiceError) ToGQLError() error {
-	return gqlerror.Errorf("(%d) %s", err.Type, err.Response)
-}
 
 func InvalidKeyError() error {
-	return NewServiceError(http.StatusForbidden, "Invalid Key").ToGQLError()
+	return NewServiceError(http.StatusForbidden, "Invalid Key")
 }
