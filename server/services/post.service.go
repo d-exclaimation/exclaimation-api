@@ -76,13 +76,17 @@ func (t *PostService) UpdateOne(ctx context.Context, id int, input model.PostDto
 }
 
 func (t *PostService) ChangeRave(ctx context.Context, id int, value int) (*ent.Post, error) {
-	prev, err := t.QueryOne(ctx, id)
+	curr, err := t.client.Post.
+		Query().
+		Where(post.ID(id)).
+		Select(post.FieldCrabrave).
+		Int(ctx)
 	if err != nil {
 		return nil, err
 	}
 	res, err := t.client.Post.
 		UpdateOneID(id).
-		SetCrabrave(prev.Crabrave + value).
+		SetCrabrave(curr + value).
 		Save(ctx)
 	if err != nil {
 		return nil, err
