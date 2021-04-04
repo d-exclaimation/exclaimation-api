@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"github.com/d-exclaimation/exclaimation-api/graph/libs"
 	"github.com/d-exclaimation/exclaimation-api/utils/pipes"
 	"github.com/d-exclaimation/exclaimation-api/utils/slice"
 	"strings"
@@ -22,25 +23,15 @@ func (r *postResolver) Snippet(_ context.Context, obj *model.Post) (string, erro
 }
 
 func (r *postResolver) Nodes(_ context.Context, obj *model.Post) ([]*model.PostNode, error) {
-	leaves := slice.ReduceStr(strings.Split(obj.Body, "\n"), pipes.IsolateReducer([]pipes.IsolateStringPipe{
-		func(row string) bool { return strings.HasPrefix(row, "#") },
-		func(row string) bool { return row == "" },
-	}))
-	res := make([]*model.PostNode, len(leaves))
-	for i, val := range leaves {
-		node := "content"
-		if strings.HasPrefix(val, "#") {
-			node = "header"
-		} else if val == "" {
-			node = "space"
-		}
-		
-		res[i] = &model.PostNode{
-			Type: node,
-			Leaf: val,
-		}
-	}
-	return res, nil
+	leaves := libs.StringArray(
+		slice.ReduceStr(
+			strings.Split(obj.Body, "\n"),
+			pipes.IsolateReducer([]pipes.IsolateStringPipe{
+				func(row string) bool { return strings.HasPrefix(row, "#") },
+				func(row string) bool { return row == "" },
+			}),
+		)).ToGraphQLs()
+	return leaves, nil
 }
 
 // Post returns generated.PostResolver implementation.
