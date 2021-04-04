@@ -3,9 +3,16 @@ type Post {
     title: String!
     body: String!
     crabrave: Int!
+    snippet: String!
+    nodes: [PostNode!]!
 }
 
 input PostDTO {
     title: String!
     body: String!
+}
+
+type PostNode {
+    type: String!
+    leaf: String!
 }

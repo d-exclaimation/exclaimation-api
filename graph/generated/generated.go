@@ -36,6 +36,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Mutation() MutationResolver
+	Post() PostResolver
 	Query() QueryResolver
 }
 
@@ -54,7 +55,14 @@ type ComplexityRoot struct {
 		Body     func(childComplexity int) int
 		Crabrave func(childComplexity int) int
 		ID       func(childComplexity int) int
+		Nodes    func(childComplexity int) int
+		Snippet  func(childComplexity int) int
 		Title    func(childComplexity int) int
+	}
+
+	PostNode struct {
+		Leaf func(childComplexity int) int
+		Type func(childComplexity int) int
 	}
 
 	Query struct {
@@ -68,6 +76,10 @@ type MutationResolver interface {
 	UpdatePost(ctx context.Context, id int, input model.PostDto, key string) (*model.Post, error)
 	IncrementCrabRave(ctx context.Context, id int) (*model.Post, error)
 	DeletePost(ctx context.Context, id int, key string) (*model.Post, error)
+}
+type PostResolver interface {
+	Snippet(ctx context.Context, obj *model.Post) (string, error)
+	Nodes(ctx context.Context, obj *model.Post) ([]*model.PostNode, error)
 }
 type QueryResolver interface {
 	Post(ctx context.Context, id int) (*model.Post, error)
@@ -158,12 +170,40 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.ID(childComplexity), true
 
+	case "Post.nodes":
+		if e.complexity.Post.Nodes == nil {
+			break
+		}
+
+		return e.complexity.Post.Nodes(childComplexity), true
+
+	case "Post.snippet":
+		if e.complexity.Post.Snippet == nil {
+			break
+		}
+
+		return e.complexity.Post.Snippet(childComplexity), true
+
 	case "Post.title":
 		if e.complexity.Post.Title == nil {
 			break
 		}
 
 		return e.complexity.Post.Title(childComplexity), true
+
+	case "PostNode.leaf":
+		if e.complexity.PostNode.Leaf == nil {
+			break
+		}
+
+		return e.complexity.PostNode.Leaf(childComplexity), true
+
+	case "PostNode.type":
+		if e.complexity.PostNode.Type == nil {
+			break
+		}
+
+		return e.complexity.PostNode.Type(childComplexity), true
 
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
@@ -253,11 +293,18 @@ var sources = []*ast.Source{
     title: String!
     body: String!
     crabrave: Int!
+    snippet: String!
+    nodes: [PostNode!]!
 }
 
 input PostDTO {
     title: String!
     body: String!
+}
+
+type PostNode {
+    type: String!
+    leaf: String!
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphql", Input: `type Query {
     post(id: Int!): Post
@@ -747,6 +794,146 @@ func (ec *executionContext) _Post_crabrave(ctx context.Context, field graphql.Co
 	res := resTmp.(int)
 	fc.Result = res
 	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_snippet(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().Snippet(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Post_nodes(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().Nodes(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.PostNode)
+	fc.Result = res
+	return ec.marshalNPostNode2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPostNodeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostNode_type(ctx context.Context, field graphql.CollectedField, obj *model.PostNode) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostNode",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostNode_leaf(ctx context.Context, field graphql.CollectedField, obj *model.PostNode) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostNode",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Leaf, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_post(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2077,20 +2264,80 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "id":
 			out.Values[i] = ec._Post_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "title":
 			out.Values[i] = ec._Post_title(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "body":
 			out.Values[i] = ec._Post_body(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "crabrave":
 			out.Values[i] = ec._Post_crabrave(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "snippet":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_snippet(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "nodes":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_nodes(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var postNodeImplementors = []string{"PostNode"}
+
+func (ec *executionContext) _PostNode(ctx context.Context, sel ast.SelectionSet, obj *model.PostNode) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postNodeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PostNode")
+		case "type":
+			out.Values[i] = ec._PostNode_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "leaf":
+			out.Values[i] = ec._PostNode_leaf(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -2504,6 +2751,53 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋdᚑexclaimationᚋex
 func (ec *executionContext) unmarshalNPostDTO2githubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPostDto(ctx context.Context, v interface{}) (model.PostDto, error) {
 	res, err := ec.unmarshalInputPostDTO(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNPostNode2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPostNodeᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.PostNode) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPostNode2ᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPostNode(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalNPostNode2ᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPostNode(ctx context.Context, sel ast.SelectionSet, v *model.PostNode) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._PostNode(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {

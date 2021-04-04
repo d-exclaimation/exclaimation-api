@@ -2,14 +2,12 @@
 
 package model
 
-type Post struct {
-	ID       string `json:"id"`
-	Title    string `json:"title"`
-	Body     string `json:"body"`
-	Crabrave int    `json:"crabrave"`
-}
-
 type PostDto struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`
+}
+
+type PostNode struct {
+	Type string `json:"type"`
+	Leaf string `json:"leaf"`
 }
