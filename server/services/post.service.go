@@ -15,7 +15,6 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	"github.com/d-exclaimation/exclaimation-api/server/errors"
 	"net/http"
-	"sort"
 )
 
 type PostService struct {
@@ -28,15 +27,15 @@ func PostServiceProvider(client *ent.Client) *PostService {
 	}
 }
 
-func (t *PostService) QueryAll(ctx context.Context) (ent.Posts, error) {
+func (t *PostService) QueryAll(ctx context.Context, limit int) (ent.Posts, error) {
 	res, err := t.client.
 		Post.Query().
+		Limit(limit).
+		Order(ent.Desc(post.FieldID)).
 		All(ctx)
 	if err != nil {
 		return make(ent.Posts, 0), errors.NewServiceError(http.StatusInternalServerError, err.Error())
 	}
-
-	sort.Slice(res, func(i, j int) bool { return res[i].ID < res[j].ID })
 	return res, nil
 }
 

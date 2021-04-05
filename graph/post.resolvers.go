@@ -5,16 +5,16 @@ package graph
 
 import (
 	"context"
-	"github.com/d-exclaimation/exclaimation-api/graph/libs"
-	"github.com/d-exclaimation/exclaimation-api/utils/pipes"
-	"github.com/d-exclaimation/exclaimation-api/utils/slice"
 	"strings"
 
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
+	"github.com/d-exclaimation/exclaimation-api/graph/libs"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
+	"github.com/d-exclaimation/exclaimation-api/utils/pipes"
+	"github.com/d-exclaimation/exclaimation-api/utils/slice"
 )
 
-func (r *postResolver) Snippet(_ context.Context, obj *model.Post) (string, error) {
+func (r *postResolver) Snippet(ctx context.Context, obj *model.Post) (string, error) {
 	snippet := strings.Split(obj.Body, "")
 	if len(snippet) > 60 {
 		snippet = snippet[0:60]
@@ -22,14 +22,16 @@ func (r *postResolver) Snippet(_ context.Context, obj *model.Post) (string, erro
 	return strings.Join(snippet, ""), nil
 }
 
-func (r *postResolver) Nodes(_ context.Context, obj *model.Post) ([]*model.PostNode, error) {
+func (r *postResolver) Nodes(ctx context.Context, obj *model.Post) ([]*model.PostNode, error) {
 	leaves := libs.StringArray(
 		slice.ReduceStr(
 			strings.Split(obj.Body, "\n"),
-			pipes.IsolateReducer([]pipes.IsolateStringPipe{
-				func(row string) bool { return strings.HasPrefix(row, "#") },
-				func(row string) bool { return row == "" },
-			}),
+			pipes.IsolateReducer(
+				[]pipes.IsolateStringPipe{
+					func(row string) bool { return strings.HasPrefix(row, "#") },
+					func(row string) bool { return row == "" },
+				},
+			),
 		)).ToGraphQLs()
 	return leaves, nil
 }

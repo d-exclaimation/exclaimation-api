@@ -15,7 +15,7 @@ import (
 
 type StringArray []string
 
-func createGraphQLNode(val string) *model.PostNode {
+func CreateGraphQLNode(val string) *model.PostNode {
 	node := "content"
 	if strings.HasPrefix(val, "#") {
 		node = "header"
@@ -32,7 +32,7 @@ func createGraphQLNode(val string) *model.PostNode {
 func (t StringArray) ToGraphQLs() []*model.PostNode {
 	res := make([]*model.PostNode, len(t))
 	for i, val := range t {
-		res[i] = createGraphQLNode(val)
+		res[i] = CreateGraphQLNode(val)
 	}
 	return res
 }

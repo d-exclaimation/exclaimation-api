@@ -63,8 +63,8 @@ func (r *queryResolver) Post(ctx context.Context, id int) (*model.Post, error) {
 	return res.ToGraphQL(), nil
 }
 
-func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
-	res, err := r.post.QueryAll(ctx)
+func (r *queryResolver) Posts(ctx context.Context, limit int) ([]*model.Post, error) {
+	res, err := r.post.QueryAll(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
