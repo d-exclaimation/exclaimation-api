@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"github.com/d-exclaimation/exclaimation-api/server/libs"
 
 	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
@@ -63,8 +64,8 @@ func (r *queryResolver) Post(ctx context.Context, id int) (*model.Post, error) {
 	return res.ToGraphQL(), nil
 }
 
-func (r *queryResolver) Posts(ctx context.Context, limit int) ([]*model.Post, error) {
-	res, err := r.post.QueryAll(ctx, limit)
+func (r *queryResolver) Posts(ctx context.Context, limit int, by string) ([]*model.Post, error) {
+	res, err := r.post.QueryAll(ctx, limit, libs.ToSortBy(by))
 	if err != nil {
 		return nil, err
 	}

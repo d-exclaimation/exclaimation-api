@@ -14,6 +14,7 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/ent/post"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	"github.com/d-exclaimation/exclaimation-api/server/errors"
+	"github.com/d-exclaimation/exclaimation-api/server/libs"
 	"net/http"
 )
 
@@ -27,11 +28,11 @@ func PostServiceProvider(client *ent.Client) *PostService {
 	}
 }
 
-func (t *PostService) QueryAll(ctx context.Context, limit int) (ent.Posts, error) {
+func (t *PostService) QueryAll(ctx context.Context, limit int, by libs.SortBy) (ent.Posts, error) {
 	res, err := t.client.
 		Post.Query().
 		Limit(limit).
-		Order(ent.Desc(post.FieldID)).
+		Order(libs.EntOrderBy(by)).
 		All(ctx)
 	if err != nil {
 		return make(ent.Posts, 0), errors.NewServiceError(http.StatusInternalServerError, err.Error())

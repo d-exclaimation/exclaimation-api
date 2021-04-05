@@ -67,7 +67,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		Post  func(childComplexity int, id int) int
-		Posts func(childComplexity int, limit int) int
+		Posts func(childComplexity int, limit int, by string) int
 	}
 }
 
@@ -83,7 +83,7 @@ type PostResolver interface {
 }
 type QueryResolver interface {
 	Post(ctx context.Context, id int) (*model.Post, error)
-	Posts(ctx context.Context, limit int) ([]*model.Post, error)
+	Posts(ctx context.Context, limit int, by string) ([]*model.Post, error)
 }
 
 type executableSchema struct {
@@ -227,7 +227,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Posts(childComplexity, args["limit"].(int)), true
+		return e.complexity.Query.Posts(childComplexity, args["limit"].(int), args["by"].(string)), true
 
 	}
 	return 0, false
@@ -313,7 +313,7 @@ type PostNode {
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphql", Input: `type Query {
     post(id: Int!): Post
-    posts(limit: Int!): [Post!]!
+    posts(limit: Int!, by: String!): [Post!]!
 }
 
 type Mutation {
@@ -467,6 +467,15 @@ func (ec *executionContext) field_Query_posts_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["limit"] = arg0
+	var arg1 string
+	if tmp, ok := rawArgs["by"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("by"))
+		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["by"] = arg1
 	return args, nil
 }
 
@@ -1020,7 +1029,7 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Posts(rctx, args["limit"].(int))
+		return ec.resolvers.Query().Posts(rctx, args["limit"].(int), args["by"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
