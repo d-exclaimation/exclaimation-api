@@ -15,6 +15,9 @@ import (
 )
 
 func InvokeDotEnv() {
+    if GetServerMode() == Prod {
+        return
+    }
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalln(err)
 	}
