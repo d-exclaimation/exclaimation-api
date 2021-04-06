@@ -28,7 +28,7 @@ func CorsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return em.CORSWithConfig(em.CORSConfig{
 		Skipper:      em.DefaultSkipper,
 		AllowCredentials: config.GetServerMode() != config.Maintenance,
-        AllowOrigins: []string{ "http://localhost:3000", "https://exclaimation.netlify.app/"},
+        AllowOrigins: []string{ "http://localhost:3000", "https://exclaimation.netlify.app/", "http://www.dexclaimation.com", "https://www.dexclaimation.com"},
 		AllowMethods: allowedMethods(),
 	})(next)
 }
