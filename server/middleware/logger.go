@@ -26,8 +26,8 @@ func loggerFormat() string {
 	switch mode {
 	case config.Prod:
 		hexColor = "#fc038c"
-		method = " ${status} ${method} "
-		endpoint = " >> ${uri}\n at ${time_rfc3339}\n"
+		method = "[ ${status} ${method} ]"
+		endpoint = " >> [ ${uri} ]\nfor ${latency_human}\n\n"
 		break
 	case config.Maintenance:
 		header = "${time_rfc3339} |"
