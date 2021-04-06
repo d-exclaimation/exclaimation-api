@@ -15,37 +15,15 @@ import (
 )
 
 func InvokeDotEnv() {
-    if GetServerMode() == Prod {
-        return
-    }
+	if GetServerMode() == Prod {
+		return
+	}
 	if err := godotenv.Load(".env"); err != nil {
 		log.Fatalln(err)
 	}
 }
 
-type EnvMode string
-
-const (
-	Prod        EnvMode = "prod"
-	Dev         EnvMode = "dev"
-	Maintenance EnvMode = "down"
-)
-
 const defaultPort = "4000"
-
-func GetServerMode() EnvMode {
-	mode := os.Getenv("ENV_MODE")
-	switch mode {
-	case "PRODUCTION":
-		return Prod
-	case "DEVELOPMENT":
-		return Dev
-	case "MAINTENANCE":
-		return Maintenance
-	default:
-		return Dev
-	}
-}
 
 func GetDatabaseURL() string {
 	dbURL := os.Getenv("DATABASE_URL")
