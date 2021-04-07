@@ -12,17 +12,13 @@ require (
 	github.com/labstack/echo/v4 v4.2.1
 	github.com/lib/pq v1.10.0
 	github.com/mattn/go-colorable v0.1.8 // indirect
-	github.com/urfave/cli/v2 v2.1.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.1.0
 	go.uber.org/fx v1.13.1
 	go.uber.org/multierr v1.6.0 // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
-	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210331212208-0fccb6fa2b5c // indirect
 	golang.org/x/sys v0.0.0-20210331175145-43e1dd70ce54 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
-	honnef.co/go/tools v0.1.3 // indirect
 )

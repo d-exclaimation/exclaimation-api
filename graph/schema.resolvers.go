@@ -5,12 +5,12 @@ package graph
 
 import (
 	"context"
-	"github.com/d-exclaimation/exclaimation-api/server/libs"
 
 	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	e "github.com/d-exclaimation/exclaimation-api/server/errors"
+	"github.com/d-exclaimation/exclaimation-api/server/libs"
 )
 
 func (r *mutationResolver) NewPost(ctx context.Context, input model.PostDto, key string) (*model.Post, error) {
