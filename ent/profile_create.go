@@ -142,11 +142,6 @@ func (pc *ProfileCreate) check() error {
 	if _, ok := pc.mutation.AvatarURL(); !ok {
 		return &ValidationError{Name: "avatar_url", err: errors.New("ent: missing required field \"avatar_url\"")}
 	}
-	if v, ok := pc.mutation.AvatarURL(); ok {
-		if err := profile.AvatarURLValidator(v); err != nil {
-			return &ValidationError{Name: "avatar_url", err: fmt.Errorf("ent: validator failed for field \"avatar_url\": %w", err)}
-		}
-	}
 	if _, ok := pc.mutation.GithubURL(); !ok {
 		return &ValidationError{Name: "github_url", err: errors.New("ent: missing required field \"github_url\"")}
 	}
@@ -169,18 +164,8 @@ func (pc *ProfileCreate) check() error {
 	if _, ok := pc.mutation.TwitterUsername(); !ok {
 		return &ValidationError{Name: "twitter_username", err: errors.New("ent: missing required field \"twitter_username\"")}
 	}
-	if v, ok := pc.mutation.TwitterUsername(); ok {
-		if err := profile.TwitterUsernameValidator(v); err != nil {
-			return &ValidationError{Name: "twitter_username", err: fmt.Errorf("ent: validator failed for field \"twitter_username\": %w", err)}
-		}
-	}
 	if _, ok := pc.mutation.PublicRepo(); !ok {
 		return &ValidationError{Name: "public_repo", err: errors.New("ent: missing required field \"public_repo\"")}
-	}
-	if v, ok := pc.mutation.PublicRepo(); ok {
-		if err := profile.PublicRepoValidator(v); err != nil {
-			return &ValidationError{Name: "public_repo", err: fmt.Errorf("ent: validator failed for field \"public_repo\": %w", err)}
-		}
 	}
 	if _, ok := pc.mutation.Followers(); !ok {
 		return &ValidationError{Name: "followers", err: errors.New("ent: missing required field \"followers\"")}

@@ -59,16 +59,10 @@ func ValidColumn(column string) bool {
 var (
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// AvatarURLValidator is a validator for the "avatar_url" field. It is called by the builders before save.
-	AvatarURLValidator func(string) error
 	// GithubURLValidator is a validator for the "github_url" field. It is called by the builders before save.
 	GithubURLValidator func(string) error
 	// LocationValidator is a validator for the "location" field. It is called by the builders before save.
 	LocationValidator func(string) error
-	// TwitterUsernameValidator is a validator for the "twitter_username" field. It is called by the builders before save.
-	TwitterUsernameValidator func(string) error
-	// PublicRepoValidator is a validator for the "public_repo" field. It is called by the builders before save.
-	PublicRepoValidator func(int) error
 	// FollowersValidator is a validator for the "followers" field. It is called by the builders before save.
 	FollowersValidator func(int) error
 	// FollowingValidator is a validator for the "following" field. It is called by the builders before save.

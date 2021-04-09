@@ -4,6 +4,7 @@
 
 # Scripts
 _deploy.sh
+_hot_reload.sh
 
 # Logs
 logs

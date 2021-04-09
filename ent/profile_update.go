@@ -177,11 +177,6 @@ func (pu *ProfileUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
 		}
 	}
-	if v, ok := pu.mutation.AvatarURL(); ok {
-		if err := profile.AvatarURLValidator(v); err != nil {
-			return &ValidationError{Name: "avatar_url", err: fmt.Errorf("ent: validator failed for field \"avatar_url\": %w", err)}
-		}
-	}
 	if v, ok := pu.mutation.GithubURL(); ok {
 		if err := profile.GithubURLValidator(v); err != nil {
 			return &ValidationError{Name: "github_url", err: fmt.Errorf("ent: validator failed for field \"github_url\": %w", err)}
@@ -190,16 +185,6 @@ func (pu *ProfileUpdate) check() error {
 	if v, ok := pu.mutation.Location(); ok {
 		if err := profile.LocationValidator(v); err != nil {
 			return &ValidationError{Name: "location", err: fmt.Errorf("ent: validator failed for field \"location\": %w", err)}
-		}
-	}
-	if v, ok := pu.mutation.TwitterUsername(); ok {
-		if err := profile.TwitterUsernameValidator(v); err != nil {
-			return &ValidationError{Name: "twitter_username", err: fmt.Errorf("ent: validator failed for field \"twitter_username\": %w", err)}
-		}
-	}
-	if v, ok := pu.mutation.PublicRepo(); ok {
-		if err := profile.PublicRepoValidator(v); err != nil {
-			return &ValidationError{Name: "public_repo", err: fmt.Errorf("ent: validator failed for field \"public_repo\": %w", err)}
 		}
 	}
 	if v, ok := pu.mutation.Followers(); ok {
@@ -492,11 +477,6 @@ func (puo *ProfileUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
 		}
 	}
-	if v, ok := puo.mutation.AvatarURL(); ok {
-		if err := profile.AvatarURLValidator(v); err != nil {
-			return &ValidationError{Name: "avatar_url", err: fmt.Errorf("ent: validator failed for field \"avatar_url\": %w", err)}
-		}
-	}
 	if v, ok := puo.mutation.GithubURL(); ok {
 		if err := profile.GithubURLValidator(v); err != nil {
 			return &ValidationError{Name: "github_url", err: fmt.Errorf("ent: validator failed for field \"github_url\": %w", err)}
@@ -505,16 +485,6 @@ func (puo *ProfileUpdateOne) check() error {
 	if v, ok := puo.mutation.Location(); ok {
 		if err := profile.LocationValidator(v); err != nil {
 			return &ValidationError{Name: "location", err: fmt.Errorf("ent: validator failed for field \"location\": %w", err)}
-		}
-	}
-	if v, ok := puo.mutation.TwitterUsername(); ok {
-		if err := profile.TwitterUsernameValidator(v); err != nil {
-			return &ValidationError{Name: "twitter_username", err: fmt.Errorf("ent: validator failed for field \"twitter_username\": %w", err)}
-		}
-	}
-	if v, ok := puo.mutation.PublicRepo(); ok {
-		if err := profile.PublicRepoValidator(v); err != nil {
-			return &ValidationError{Name: "public_repo", err: fmt.Errorf("ent: validator failed for field \"public_repo\": %w", err)}
 		}
 	}
 	if v, ok := puo.mutation.Followers(); ok {

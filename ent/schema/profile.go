@@ -14,19 +14,15 @@ type Profile struct {
 func (Profile) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").
-			NotEmpty().
-			Comment("Name of the github page"),
-		field.String("avatar_url").
 			NotEmpty(),
+		field.String("avatar_url"),
 		field.String("github_url").
 			NotEmpty(),
 		field.String("location").
 			NotEmpty(),
 		field.Text("bio"),
-		field.String("twitter_username").
-			NotEmpty(),
-		field.Int("public_repo").
-			NonNegative(),
+		field.String("twitter_username"),
+		field.Int("public_repo"),
 		field.Int("followers").
 			NonNegative(),
 		field.Int("following").

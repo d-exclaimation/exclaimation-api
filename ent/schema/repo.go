@@ -17,8 +17,7 @@ func (Repo) Fields() []ent.Field {
 			NotEmpty(),
 		field.String("repo_name").
 			NotEmpty(),
-		field.String("url").
-			NotEmpty(),
+		field.String("url"),
 		field.Text("description"),
 		field.String("language"),
 		field.Time("last_updated"),

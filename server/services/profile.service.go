@@ -12,8 +12,9 @@ import (
 	"context"
 	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/ent"
-	"github.com/d-exclaimation/exclaimation-api/graph/libs"
+	"github.com/d-exclaimation/exclaimation-api/server/libs"
 	"github.com/d-exclaimation/exclaimation-api/server/models/raw"
+	"log"
 	"time"
 )
 
@@ -38,7 +39,7 @@ func (t *ProfileService) GetProfile(ctx context.Context) (*ent.Profile, error) {
 	}
 
 	// Check for timing
-	twelve, _ := time.ParseDuration("12h")
+	twelve, _ := time.ParseDuration(config.GetRefreshRate())
 	if res != nil && time.Now().After(res.LastUpdated.Add(twelve)) {
 		stale = true
 	}
@@ -85,6 +86,7 @@ func (t *ProfileService) createProfile(ctx context.Context, raw *raw.Profile) (*
 		SetPublicRepo(raw.PublicRepos).
 		SetFollowers(raw.Followers).
 		SetFollowing(raw.Following).
+		SetLastUpdated(time.Now()).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -103,6 +105,7 @@ func (t *ProfileService) updateProfile(ctx context.Context, id int, raw *raw.Pro
 		SetPublicRepo(raw.PublicRepos).
 		SetFollowers(raw.Followers).
 		SetFollowing(raw.Following).
+		SetLastUpdated(time.Now()).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -111,14 +114,107 @@ func (t *ProfileService) updateProfile(ctx context.Context, id int, raw *raw.Pro
 }
 
 func (t *ProfileService) fetchProfile() (*raw.Profile, error) {
-	var profile *raw.Profile
-	if err := libs.GetAndParse(config.GetProfileURL(), profile); err != nil {
+	var profile raw.Profile
+	if err := libs.GetAndParse(config.GetProfileURL(), &profile); err != nil {
 		return nil, err
 	}
-	return profile, nil
+	return &profile, nil
 }
 
 // GetAllRepos and Helper methods
-func (t *ProfileService) GetAllRepos(limit int) (ent.Repos, error) {
-	return make(ent.Repos, 0), nil
+func (t *ProfileService) GetAllRepos(ctx context.Context, limit int) (ent.Repos, error) {
+	// Get from database
+	stale := false
+	rep, err := t.getOneRepo(ctx)
+	if err != nil || rep == nil{
+		log.Println("Cannot find")
+		stale = true
+	}
+	
+	twelve, _ := time.ParseDuration(config.GetRefreshRate())
+	if rep != nil && time.Now().After(rep.LastUpdated.Add(twelve)) {
+		log.Println("Stale data")
+		stale = true
+	}
+	res := make(ent.Repos, 0)
+	// if stale, re-fetch
+	if stale {
+		data, err := t.fetchRepos()
+		if err != nil {
+			log.Println("I died")
+			return nil, err
+		}
+
+		// if state, update or create
+		res, err = t.updateReposIsh(ctx, rep != nil, data)
+		if len(res) > limit {
+			res = res[:limit]
+		}
+	} else {
+		log.Println("Not stale lol")
+		res, err = t.getRepos(ctx, limit)
+	}
+	
+	if err != nil {
+		log.Println("Error here")
+		return nil, err
+	}
+	return res, nil
+}
+
+func (t *ProfileService) getOneRepo(ctx context.Context) (*ent.Repo, error) {
+	res, err := t.client.Repo.
+		Query().
+		First(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (t *ProfileService) getRepos(ctx context.Context, limit int) (ent.Repos, error) {
+	res, err := t.client.Repo.
+		Query().
+		Limit(limit).
+		All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (t *ProfileService) updateReposIsh(ctx context.Context, wipe bool, data raw.Repos) (ent.Repos, error) {
+	if wipe {
+		_, err := t.client.Repo.
+			Delete().
+			Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	bulk := make([]*ent.RepoCreate, len(data))
+	for i, dat := range data {
+		lang := ""
+		if dat.Language != nil { lang = *dat.Language }
+		bulk[i] = t.client.Repo.Create().
+			SetRepoName(dat.FullName).
+			SetName(dat.Name).
+			SetURL(dat.URL).
+			SetLanguage(lang).
+			SetDescription(dat.Description).
+			SetLastUpdated(time.Now())
+	}
+	res, err := t.client.Repo.CreateBulk(bulk...).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+func (t *ProfileService) fetchRepos() (raw.Repos, error) {
+	var repos raw.Repos
+	if err := libs.GetAndParse(config.GetProfileURL() + "/repos", &repos); err != nil {
+		return nil, err
+	}
+	return repos, nil
 }

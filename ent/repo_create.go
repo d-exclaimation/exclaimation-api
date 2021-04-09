@@ -126,11 +126,6 @@ func (rc *RepoCreate) check() error {
 	if _, ok := rc.mutation.URL(); !ok {
 		return &ValidationError{Name: "url", err: errors.New("ent: missing required field \"url\"")}
 	}
-	if v, ok := rc.mutation.URL(); ok {
-		if err := repo.URLValidator(v); err != nil {
-			return &ValidationError{Name: "url", err: fmt.Errorf("ent: validator failed for field \"url\": %w", err)}
-		}
-	}
 	if _, ok := rc.mutation.Description(); !ok {
 		return &ValidationError{Name: "description", err: errors.New("ent: missing required field \"description\"")}
 	}

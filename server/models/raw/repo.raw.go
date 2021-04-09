@@ -68,7 +68,7 @@ type Repo struct {
 	Size             int         `json:"size"`
 	StargazersCount  int         `json:"stargazers_count"`
 	WatchersCount    int         `json:"watchers_count"`
-	Language         string      `json:"language"`
+	Language         *string      `json:"language,omitempty"`
 	HasIssues        bool        `json:"has_issues"`
 	HasProjects      bool        `json:"has_projects"`
 	HasDownloads     bool        `json:"has_downloads"`
@@ -113,4 +113,4 @@ type License struct {
 	NodeID string `json:"node_id"`
 }
 
-type Repos []Repo
+type Repos []*Repo

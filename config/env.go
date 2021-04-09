@@ -57,3 +57,13 @@ func GetProfileURL() string {
 	}
 	return url
 }
+
+const defaultRefreshDuration = "10h"
+
+func GetRefreshRate() string {
+	rate := os.Getenv("REFRESH_RATE")
+	if rate == "" || len(rate) < 1 {
+		rate = defaultRefreshDuration
+	}
+	return rate
+}

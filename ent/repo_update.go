@@ -137,11 +137,6 @@ func (ru *RepoUpdate) check() error {
 			return &ValidationError{Name: "repo_name", err: fmt.Errorf("ent: validator failed for field \"repo_name\": %w", err)}
 		}
 	}
-	if v, ok := ru.mutation.URL(); ok {
-		if err := repo.URLValidator(v); err != nil {
-			return &ValidationError{Name: "url", err: fmt.Errorf("ent: validator failed for field \"url\": %w", err)}
-		}
-	}
 	return nil
 }
 
@@ -331,11 +326,6 @@ func (ruo *RepoUpdateOne) check() error {
 	if v, ok := ruo.mutation.RepoName(); ok {
 		if err := repo.RepoNameValidator(v); err != nil {
 			return &ValidationError{Name: "repo_name", err: fmt.Errorf("ent: validator failed for field \"repo_name\": %w", err)}
-		}
-	}
-	if v, ok := ruo.mutation.URL(); ok {
-		if err := repo.URLValidator(v); err != nil {
-			return &ValidationError{Name: "url", err: fmt.Errorf("ent: validator failed for field \"url\": %w", err)}
 		}
 	}
 	return nil

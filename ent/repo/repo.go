@@ -49,6 +49,4 @@ var (
 	NameValidator func(string) error
 	// RepoNameValidator is a validator for the "repo_name" field. It is called by the builders before save.
 	RepoNameValidator func(string) error
-	// URLValidator is a validator for the "url" field. It is called by the builders before save.
-	URLValidator func(string) error
 )
