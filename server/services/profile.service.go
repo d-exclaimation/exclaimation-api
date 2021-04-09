@@ -14,7 +14,6 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/ent"
 	"github.com/d-exclaimation/exclaimation-api/server/libs"
 	"github.com/d-exclaimation/exclaimation-api/server/models/raw"
-	"log"
 	"time"
 )
 
@@ -34,7 +33,7 @@ func (t *ProfileService) GetProfile(ctx context.Context) (*ent.Profile, error) {
 	// Grab from database, ok
 	stale := false
 	res, err := t.queryProfile(ctx)
-	if err != nil || res == nil {
+	if err != nil {
 		stale = true
 	}
 
@@ -46,9 +45,9 @@ func (t *ProfileService) GetProfile(ctx context.Context) (*ent.Profile, error) {
 
 	// Re-fetch data, ok
 	if stale {
-		data, err := t.fetchProfile()
-		if err != nil {
-			return nil, err
+		data, fail := t.fetchProfile()
+		if fail != nil {
+			return nil, fail
 		}
 
 		// Insert or Create New Record, ok
@@ -126,23 +125,20 @@ func (t *ProfileService) GetAllRepos(ctx context.Context, limit int) (ent.Repos,
 	// Get from database
 	stale := false
 	rep, err := t.getOneRepo(ctx)
-	if err != nil || rep == nil{
-		log.Println("Cannot find")
+	if err != nil {
 		stale = true
 	}
 	
 	twelve, _ := time.ParseDuration(config.GetRefreshRate())
 	if rep != nil && time.Now().After(rep.LastUpdated.Add(twelve)) {
-		log.Println("Stale data")
 		stale = true
 	}
 	res := make(ent.Repos, 0)
 	// if stale, re-fetch
 	if stale {
-		data, err := t.fetchRepos()
-		if err != nil {
-			log.Println("I died")
-			return nil, err
+		data, fail := t.fetchRepos()
+		if fail != nil {
+			return nil, fail
 		}
 
 		// if state, update or create
@@ -151,12 +147,10 @@ func (t *ProfileService) GetAllRepos(ctx context.Context, limit int) (ent.Repos,
 			res = res[:limit]
 		}
 	} else {
-		log.Println("Not stale lol")
 		res, err = t.getRepos(ctx, limit)
 	}
 	
 	if err != nil {
-		log.Println("Error here")
 		return nil, err
 	}
 	return res, nil
