@@ -49,3 +49,11 @@ func GetKey() string {
 	}
 	return key
 }
+
+func GetProfileURL() string {
+	url := os.Getenv("GITHUB")
+	if url == "" || len(url) < 1 {
+		url = "aaaaaaaaaaaaaaaaaaaaaaaaa"
+	}
+	return url
+}

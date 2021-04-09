@@ -4,6 +4,8 @@ package ent
 
 import (
 	"github.com/d-exclaimation/exclaimation-api/ent/post"
+	"github.com/d-exclaimation/exclaimation-api/ent/profile"
+	"github.com/d-exclaimation/exclaimation-api/ent/repo"
 	"github.com/d-exclaimation/exclaimation-api/ent/schema"
 )
 
@@ -25,4 +27,52 @@ func init() {
 	postDescCrabrave := postFields[2].Descriptor()
 	// post.DefaultCrabrave holds the default value on creation for the crabrave field.
 	post.DefaultCrabrave = postDescCrabrave.Default.(int)
+	profileFields := schema.Profile{}.Fields()
+	_ = profileFields
+	// profileDescName is the schema descriptor for name field.
+	profileDescName := profileFields[0].Descriptor()
+	// profile.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	profile.NameValidator = profileDescName.Validators[0].(func(string) error)
+	// profileDescAvatarURL is the schema descriptor for avatar_url field.
+	profileDescAvatarURL := profileFields[1].Descriptor()
+	// profile.AvatarURLValidator is a validator for the "avatar_url" field. It is called by the builders before save.
+	profile.AvatarURLValidator = profileDescAvatarURL.Validators[0].(func(string) error)
+	// profileDescGithubURL is the schema descriptor for github_url field.
+	profileDescGithubURL := profileFields[2].Descriptor()
+	// profile.GithubURLValidator is a validator for the "github_url" field. It is called by the builders before save.
+	profile.GithubURLValidator = profileDescGithubURL.Validators[0].(func(string) error)
+	// profileDescLocation is the schema descriptor for location field.
+	profileDescLocation := profileFields[3].Descriptor()
+	// profile.LocationValidator is a validator for the "location" field. It is called by the builders before save.
+	profile.LocationValidator = profileDescLocation.Validators[0].(func(string) error)
+	// profileDescTwitterUsername is the schema descriptor for twitter_username field.
+	profileDescTwitterUsername := profileFields[5].Descriptor()
+	// profile.TwitterUsernameValidator is a validator for the "twitter_username" field. It is called by the builders before save.
+	profile.TwitterUsernameValidator = profileDescTwitterUsername.Validators[0].(func(string) error)
+	// profileDescPublicRepo is the schema descriptor for public_repo field.
+	profileDescPublicRepo := profileFields[6].Descriptor()
+	// profile.PublicRepoValidator is a validator for the "public_repo" field. It is called by the builders before save.
+	profile.PublicRepoValidator = profileDescPublicRepo.Validators[0].(func(int) error)
+	// profileDescFollowers is the schema descriptor for followers field.
+	profileDescFollowers := profileFields[7].Descriptor()
+	// profile.FollowersValidator is a validator for the "followers" field. It is called by the builders before save.
+	profile.FollowersValidator = profileDescFollowers.Validators[0].(func(int) error)
+	// profileDescFollowing is the schema descriptor for following field.
+	profileDescFollowing := profileFields[8].Descriptor()
+	// profile.FollowingValidator is a validator for the "following" field. It is called by the builders before save.
+	profile.FollowingValidator = profileDescFollowing.Validators[0].(func(int) error)
+	repoFields := schema.Repo{}.Fields()
+	_ = repoFields
+	// repoDescName is the schema descriptor for name field.
+	repoDescName := repoFields[0].Descriptor()
+	// repo.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	repo.NameValidator = repoDescName.Validators[0].(func(string) error)
+	// repoDescRepoName is the schema descriptor for repo_name field.
+	repoDescRepoName := repoFields[1].Descriptor()
+	// repo.RepoNameValidator is a validator for the "repo_name" field. It is called by the builders before save.
+	repo.RepoNameValidator = repoDescRepoName.Validators[0].(func(string) error)
+	// repoDescURL is the schema descriptor for url field.
+	repoDescURL := repoFields[2].Descriptor()
+	// repo.URLValidator is a validator for the "url" field. It is called by the builders before save.
+	repo.URLValidator = repoDescURL.Validators[0].(func(string) error)
 }

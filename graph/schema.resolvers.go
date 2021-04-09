@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
@@ -70,6 +71,18 @@ func (r *queryResolver) Posts(ctx context.Context, limit int, by string) ([]*mod
 		return nil, err
 	}
 	return res.ToGraphQLs(), nil
+}
+
+func (r *queryResolver) Profile(ctx context.Context) (*model.Profile, error) {
+	res, err := r.profile.GetProfile(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res.ToGraphQL(), nil
+}
+
+func (r *queryResolver) Repos(ctx context.Context, limit int) ([]*model.Repo, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.

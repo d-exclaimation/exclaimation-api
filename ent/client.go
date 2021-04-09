@@ -10,6 +10,8 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/ent/migrate"
 
 	"github.com/d-exclaimation/exclaimation-api/ent/post"
+	"github.com/d-exclaimation/exclaimation-api/ent/profile"
+	"github.com/d-exclaimation/exclaimation-api/ent/repo"
 
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
@@ -22,6 +24,10 @@ type Client struct {
 	Schema *migrate.Schema
 	// Post is the client for interacting with the Post builders.
 	Post *PostClient
+	// Profile is the client for interacting with the Profile builders.
+	Profile *ProfileClient
+	// Repo is the client for interacting with the Repo builders.
+	Repo *RepoClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -36,6 +42,8 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.Post = NewPostClient(c.config)
+	c.Profile = NewProfileClient(c.config)
+	c.Repo = NewRepoClient(c.config)
 }
 
 // Open opens a database/sql.DB specified by the driver name and
@@ -67,9 +75,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:    ctx,
-		config: cfg,
-		Post:   NewPostClient(cfg),
+		ctx:     ctx,
+		config:  cfg,
+		Post:    NewPostClient(cfg),
+		Profile: NewProfileClient(cfg),
+		Repo:    NewRepoClient(cfg),
 	}, nil
 }
 
@@ -87,8 +97,10 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		config: cfg,
-		Post:   NewPostClient(cfg),
+		config:  cfg,
+		Post:    NewPostClient(cfg),
+		Profile: NewProfileClient(cfg),
+		Repo:    NewRepoClient(cfg),
 	}, nil
 }
 
@@ -119,6 +131,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	c.Post.Use(hooks...)
+	c.Profile.Use(hooks...)
+	c.Repo.Use(hooks...)
 }
 
 // PostClient is a client for the Post schema.
@@ -207,4 +221,180 @@ func (c *PostClient) GetX(ctx context.Context, id int) *Post {
 // Hooks returns the client hooks.
 func (c *PostClient) Hooks() []Hook {
 	return c.hooks.Post
+}
+
+// ProfileClient is a client for the Profile schema.
+type ProfileClient struct {
+	config
+}
+
+// NewProfileClient returns a client for the Profile from the given config.
+func NewProfileClient(c config) *ProfileClient {
+	return &ProfileClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `profile.Hooks(f(g(h())))`.
+func (c *ProfileClient) Use(hooks ...Hook) {
+	c.hooks.Profile = append(c.hooks.Profile, hooks...)
+}
+
+// Create returns a create builder for Profile.
+func (c *ProfileClient) Create() *ProfileCreate {
+	mutation := newProfileMutation(c.config, OpCreate)
+	return &ProfileCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Profile entities.
+func (c *ProfileClient) CreateBulk(builders ...*ProfileCreate) *ProfileCreateBulk {
+	return &ProfileCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Profile.
+func (c *ProfileClient) Update() *ProfileUpdate {
+	mutation := newProfileMutation(c.config, OpUpdate)
+	return &ProfileUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ProfileClient) UpdateOne(pr *Profile) *ProfileUpdateOne {
+	mutation := newProfileMutation(c.config, OpUpdateOne, withProfile(pr))
+	return &ProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ProfileClient) UpdateOneID(id int) *ProfileUpdateOne {
+	mutation := newProfileMutation(c.config, OpUpdateOne, withProfileID(id))
+	return &ProfileUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Profile.
+func (c *ProfileClient) Delete() *ProfileDelete {
+	mutation := newProfileMutation(c.config, OpDelete)
+	return &ProfileDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *ProfileClient) DeleteOne(pr *Profile) *ProfileDeleteOne {
+	return c.DeleteOneID(pr.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *ProfileClient) DeleteOneID(id int) *ProfileDeleteOne {
+	builder := c.Delete().Where(profile.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &ProfileDeleteOne{builder}
+}
+
+// Query returns a query builder for Profile.
+func (c *ProfileClient) Query() *ProfileQuery {
+	return &ProfileQuery{config: c.config}
+}
+
+// Get returns a Profile entity by its id.
+func (c *ProfileClient) Get(ctx context.Context, id int) (*Profile, error) {
+	return c.Query().Where(profile.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ProfileClient) GetX(ctx context.Context, id int) *Profile {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *ProfileClient) Hooks() []Hook {
+	return c.hooks.Profile
+}
+
+// RepoClient is a client for the Repo schema.
+type RepoClient struct {
+	config
+}
+
+// NewRepoClient returns a client for the Repo from the given config.
+func NewRepoClient(c config) *RepoClient {
+	return &RepoClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `repo.Hooks(f(g(h())))`.
+func (c *RepoClient) Use(hooks ...Hook) {
+	c.hooks.Repo = append(c.hooks.Repo, hooks...)
+}
+
+// Create returns a create builder for Repo.
+func (c *RepoClient) Create() *RepoCreate {
+	mutation := newRepoMutation(c.config, OpCreate)
+	return &RepoCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of Repo entities.
+func (c *RepoClient) CreateBulk(builders ...*RepoCreate) *RepoCreateBulk {
+	return &RepoCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for Repo.
+func (c *RepoClient) Update() *RepoUpdate {
+	mutation := newRepoMutation(c.config, OpUpdate)
+	return &RepoUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *RepoClient) UpdateOne(r *Repo) *RepoUpdateOne {
+	mutation := newRepoMutation(c.config, OpUpdateOne, withRepo(r))
+	return &RepoUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *RepoClient) UpdateOneID(id int) *RepoUpdateOne {
+	mutation := newRepoMutation(c.config, OpUpdateOne, withRepoID(id))
+	return &RepoUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for Repo.
+func (c *RepoClient) Delete() *RepoDelete {
+	mutation := newRepoMutation(c.config, OpDelete)
+	return &RepoDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *RepoClient) DeleteOne(r *Repo) *RepoDeleteOne {
+	return c.DeleteOneID(r.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *RepoClient) DeleteOneID(id int) *RepoDeleteOne {
+	builder := c.Delete().Where(repo.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &RepoDeleteOne{builder}
+}
+
+// Query returns a query builder for Repo.
+func (c *RepoClient) Query() *RepoQuery {
+	return &RepoQuery{config: c.config}
+}
+
+// Get returns a Repo entity by its id.
+func (c *RepoClient) Get(ctx context.Context, id int) (*Repo, error) {
+	return c.Query().Where(repo.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *RepoClient) GetX(ctx context.Context, id int) *Repo {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *RepoClient) Hooks() []Hook {
+	return c.hooks.Repo
 }

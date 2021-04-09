@@ -32,6 +32,7 @@ func main() {
 
 			// Services
 			services.PostServiceProvider,
+			services.ProfileServiceProvider,
 
 			// GraphQL Module
 			graph.ModuleProvider,

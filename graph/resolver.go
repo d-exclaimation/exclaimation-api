@@ -10,18 +10,20 @@ import (
 // Resolver Struct
 type Resolver struct {
 	post *services.PostService
+	profile *services.ProfileService
 }
 
-// Resolver Constructor
-func NewResolver(srv *services.PostService) *Resolver {
+// NewResolver Constructor
+func NewResolver(post *services.PostService, profile *services.ProfileService) *Resolver {
 	return &Resolver{
-		post: srv,
+		post: post,
+		profile: profile,
 	}
 }
 
-// Fx Provider
-func ModuleProvider(srv *services.PostService) generated.Config {
+// ModuleProvider Fx Provider
+func ModuleProvider(post *services.PostService, profile *services.ProfileService) generated.Config {
 	return generated.Config {
-		Resolvers: NewResolver(srv),
+		Resolvers: NewResolver(post, profile),
 	}
 }

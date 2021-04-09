@@ -22,6 +22,7 @@ type PostService struct {
 	client *ent.Client
 }
 
+// PostServiceProvider Fx Provider
 func PostServiceProvider(client *ent.Client) *PostService {
 	return &PostService{
 		client: client,

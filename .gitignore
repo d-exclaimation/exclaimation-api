@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+# Scripts
+_deploy.sh
+
 # Logs
 logs
 *.log

@@ -6,9 +6,12 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/d-exclaimation/exclaimation-api/ent/post"
 	"github.com/d-exclaimation/exclaimation-api/ent/predicate"
+	"github.com/d-exclaimation/exclaimation-api/ent/profile"
+	"github.com/d-exclaimation/exclaimation-api/ent/repo"
 
 	"entgo.io/ent"
 )
@@ -22,7 +25,9 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypePost = "Post"
+	TypePost    = "Post"
+	TypeProfile = "Profile"
+	TypeRepo    = "Repo"
 )
 
 // PostMutation represents an operation that mutates the Post nodes in the graph.
@@ -454,4 +459,1436 @@ func (m *PostMutation) ClearEdge(name string) error {
 // It returns an error if the edge is not defined in the schema.
 func (m *PostMutation) ResetEdge(name string) error {
 	return fmt.Errorf("unknown Post edge %s", name)
+}
+
+// ProfileMutation represents an operation that mutates the Profile nodes in the graph.
+type ProfileMutation struct {
+	config
+	op               Op
+	typ              string
+	id               *int
+	name             *string
+	avatar_url       *string
+	github_url       *string
+	location         *string
+	bio              *string
+	twitter_username *string
+	public_repo      *int
+	addpublic_repo   *int
+	followers        *int
+	addfollowers     *int
+	following        *int
+	addfollowing     *int
+	last_updated     *time.Time
+	clearedFields    map[string]struct{}
+	done             bool
+	oldValue         func(context.Context) (*Profile, error)
+	predicates       []predicate.Profile
+}
+
+var _ ent.Mutation = (*ProfileMutation)(nil)
+
+// profileOption allows management of the mutation configuration using functional options.
+type profileOption func(*ProfileMutation)
+
+// newProfileMutation creates new mutation for the Profile entity.
+func newProfileMutation(c config, op Op, opts ...profileOption) *ProfileMutation {
+	m := &ProfileMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeProfile,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withProfileID sets the ID field of the mutation.
+func withProfileID(id int) profileOption {
+	return func(m *ProfileMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Profile
+		)
+		m.oldValue = func(ctx context.Context) (*Profile, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Profile.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withProfile sets the old Profile of the mutation.
+func withProfile(node *Profile) profileOption {
+	return func(m *ProfileMutation) {
+		m.oldValue = func(context.Context) (*Profile, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m ProfileMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m ProfileMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID
+// is only available if it was provided to the builder.
+func (m *ProfileMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetName sets the "name" field.
+func (m *ProfileMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *ProfileMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *ProfileMutation) ResetName() {
+	m.name = nil
+}
+
+// SetAvatarURL sets the "avatar_url" field.
+func (m *ProfileMutation) SetAvatarURL(s string) {
+	m.avatar_url = &s
+}
+
+// AvatarURL returns the value of the "avatar_url" field in the mutation.
+func (m *ProfileMutation) AvatarURL() (r string, exists bool) {
+	v := m.avatar_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldAvatarURL returns the old "avatar_url" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldAvatarURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldAvatarURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldAvatarURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldAvatarURL: %w", err)
+	}
+	return oldValue.AvatarURL, nil
+}
+
+// ResetAvatarURL resets all changes to the "avatar_url" field.
+func (m *ProfileMutation) ResetAvatarURL() {
+	m.avatar_url = nil
+}
+
+// SetGithubURL sets the "github_url" field.
+func (m *ProfileMutation) SetGithubURL(s string) {
+	m.github_url = &s
+}
+
+// GithubURL returns the value of the "github_url" field in the mutation.
+func (m *ProfileMutation) GithubURL() (r string, exists bool) {
+	v := m.github_url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldGithubURL returns the old "github_url" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldGithubURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldGithubURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldGithubURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldGithubURL: %w", err)
+	}
+	return oldValue.GithubURL, nil
+}
+
+// ResetGithubURL resets all changes to the "github_url" field.
+func (m *ProfileMutation) ResetGithubURL() {
+	m.github_url = nil
+}
+
+// SetLocation sets the "location" field.
+func (m *ProfileMutation) SetLocation(s string) {
+	m.location = &s
+}
+
+// Location returns the value of the "location" field in the mutation.
+func (m *ProfileMutation) Location() (r string, exists bool) {
+	v := m.location
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLocation returns the old "location" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldLocation(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldLocation is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldLocation requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLocation: %w", err)
+	}
+	return oldValue.Location, nil
+}
+
+// ResetLocation resets all changes to the "location" field.
+func (m *ProfileMutation) ResetLocation() {
+	m.location = nil
+}
+
+// SetBio sets the "bio" field.
+func (m *ProfileMutation) SetBio(s string) {
+	m.bio = &s
+}
+
+// Bio returns the value of the "bio" field in the mutation.
+func (m *ProfileMutation) Bio() (r string, exists bool) {
+	v := m.bio
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldBio returns the old "bio" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldBio(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldBio is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldBio requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldBio: %w", err)
+	}
+	return oldValue.Bio, nil
+}
+
+// ResetBio resets all changes to the "bio" field.
+func (m *ProfileMutation) ResetBio() {
+	m.bio = nil
+}
+
+// SetTwitterUsername sets the "twitter_username" field.
+func (m *ProfileMutation) SetTwitterUsername(s string) {
+	m.twitter_username = &s
+}
+
+// TwitterUsername returns the value of the "twitter_username" field in the mutation.
+func (m *ProfileMutation) TwitterUsername() (r string, exists bool) {
+	v := m.twitter_username
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTwitterUsername returns the old "twitter_username" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldTwitterUsername(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldTwitterUsername is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldTwitterUsername requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTwitterUsername: %w", err)
+	}
+	return oldValue.TwitterUsername, nil
+}
+
+// ResetTwitterUsername resets all changes to the "twitter_username" field.
+func (m *ProfileMutation) ResetTwitterUsername() {
+	m.twitter_username = nil
+}
+
+// SetPublicRepo sets the "public_repo" field.
+func (m *ProfileMutation) SetPublicRepo(i int) {
+	m.public_repo = &i
+	m.addpublic_repo = nil
+}
+
+// PublicRepo returns the value of the "public_repo" field in the mutation.
+func (m *ProfileMutation) PublicRepo() (r int, exists bool) {
+	v := m.public_repo
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPublicRepo returns the old "public_repo" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldPublicRepo(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldPublicRepo is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldPublicRepo requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPublicRepo: %w", err)
+	}
+	return oldValue.PublicRepo, nil
+}
+
+// AddPublicRepo adds i to the "public_repo" field.
+func (m *ProfileMutation) AddPublicRepo(i int) {
+	if m.addpublic_repo != nil {
+		*m.addpublic_repo += i
+	} else {
+		m.addpublic_repo = &i
+	}
+}
+
+// AddedPublicRepo returns the value that was added to the "public_repo" field in this mutation.
+func (m *ProfileMutation) AddedPublicRepo() (r int, exists bool) {
+	v := m.addpublic_repo
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetPublicRepo resets all changes to the "public_repo" field.
+func (m *ProfileMutation) ResetPublicRepo() {
+	m.public_repo = nil
+	m.addpublic_repo = nil
+}
+
+// SetFollowers sets the "followers" field.
+func (m *ProfileMutation) SetFollowers(i int) {
+	m.followers = &i
+	m.addfollowers = nil
+}
+
+// Followers returns the value of the "followers" field in the mutation.
+func (m *ProfileMutation) Followers() (r int, exists bool) {
+	v := m.followers
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFollowers returns the old "followers" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldFollowers(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldFollowers is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldFollowers requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFollowers: %w", err)
+	}
+	return oldValue.Followers, nil
+}
+
+// AddFollowers adds i to the "followers" field.
+func (m *ProfileMutation) AddFollowers(i int) {
+	if m.addfollowers != nil {
+		*m.addfollowers += i
+	} else {
+		m.addfollowers = &i
+	}
+}
+
+// AddedFollowers returns the value that was added to the "followers" field in this mutation.
+func (m *ProfileMutation) AddedFollowers() (r int, exists bool) {
+	v := m.addfollowers
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFollowers resets all changes to the "followers" field.
+func (m *ProfileMutation) ResetFollowers() {
+	m.followers = nil
+	m.addfollowers = nil
+}
+
+// SetFollowing sets the "following" field.
+func (m *ProfileMutation) SetFollowing(i int) {
+	m.following = &i
+	m.addfollowing = nil
+}
+
+// Following returns the value of the "following" field in the mutation.
+func (m *ProfileMutation) Following() (r int, exists bool) {
+	v := m.following
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldFollowing returns the old "following" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldFollowing(ctx context.Context) (v int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldFollowing is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldFollowing requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldFollowing: %w", err)
+	}
+	return oldValue.Following, nil
+}
+
+// AddFollowing adds i to the "following" field.
+func (m *ProfileMutation) AddFollowing(i int) {
+	if m.addfollowing != nil {
+		*m.addfollowing += i
+	} else {
+		m.addfollowing = &i
+	}
+}
+
+// AddedFollowing returns the value that was added to the "following" field in this mutation.
+func (m *ProfileMutation) AddedFollowing() (r int, exists bool) {
+	v := m.addfollowing
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ResetFollowing resets all changes to the "following" field.
+func (m *ProfileMutation) ResetFollowing() {
+	m.following = nil
+	m.addfollowing = nil
+}
+
+// SetLastUpdated sets the "last_updated" field.
+func (m *ProfileMutation) SetLastUpdated(t time.Time) {
+	m.last_updated = &t
+}
+
+// LastUpdated returns the value of the "last_updated" field in the mutation.
+func (m *ProfileMutation) LastUpdated() (r time.Time, exists bool) {
+	v := m.last_updated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastUpdated returns the old "last_updated" field's value of the Profile entity.
+// If the Profile object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *ProfileMutation) OldLastUpdated(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldLastUpdated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldLastUpdated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastUpdated: %w", err)
+	}
+	return oldValue.LastUpdated, nil
+}
+
+// ResetLastUpdated resets all changes to the "last_updated" field.
+func (m *ProfileMutation) ResetLastUpdated() {
+	m.last_updated = nil
+}
+
+// Op returns the operation name.
+func (m *ProfileMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Profile).
+func (m *ProfileMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *ProfileMutation) Fields() []string {
+	fields := make([]string, 0, 10)
+	if m.name != nil {
+		fields = append(fields, profile.FieldName)
+	}
+	if m.avatar_url != nil {
+		fields = append(fields, profile.FieldAvatarURL)
+	}
+	if m.github_url != nil {
+		fields = append(fields, profile.FieldGithubURL)
+	}
+	if m.location != nil {
+		fields = append(fields, profile.FieldLocation)
+	}
+	if m.bio != nil {
+		fields = append(fields, profile.FieldBio)
+	}
+	if m.twitter_username != nil {
+		fields = append(fields, profile.FieldTwitterUsername)
+	}
+	if m.public_repo != nil {
+		fields = append(fields, profile.FieldPublicRepo)
+	}
+	if m.followers != nil {
+		fields = append(fields, profile.FieldFollowers)
+	}
+	if m.following != nil {
+		fields = append(fields, profile.FieldFollowing)
+	}
+	if m.last_updated != nil {
+		fields = append(fields, profile.FieldLastUpdated)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *ProfileMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case profile.FieldName:
+		return m.Name()
+	case profile.FieldAvatarURL:
+		return m.AvatarURL()
+	case profile.FieldGithubURL:
+		return m.GithubURL()
+	case profile.FieldLocation:
+		return m.Location()
+	case profile.FieldBio:
+		return m.Bio()
+	case profile.FieldTwitterUsername:
+		return m.TwitterUsername()
+	case profile.FieldPublicRepo:
+		return m.PublicRepo()
+	case profile.FieldFollowers:
+		return m.Followers()
+	case profile.FieldFollowing:
+		return m.Following()
+	case profile.FieldLastUpdated:
+		return m.LastUpdated()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *ProfileMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case profile.FieldName:
+		return m.OldName(ctx)
+	case profile.FieldAvatarURL:
+		return m.OldAvatarURL(ctx)
+	case profile.FieldGithubURL:
+		return m.OldGithubURL(ctx)
+	case profile.FieldLocation:
+		return m.OldLocation(ctx)
+	case profile.FieldBio:
+		return m.OldBio(ctx)
+	case profile.FieldTwitterUsername:
+		return m.OldTwitterUsername(ctx)
+	case profile.FieldPublicRepo:
+		return m.OldPublicRepo(ctx)
+	case profile.FieldFollowers:
+		return m.OldFollowers(ctx)
+	case profile.FieldFollowing:
+		return m.OldFollowing(ctx)
+	case profile.FieldLastUpdated:
+		return m.OldLastUpdated(ctx)
+	}
+	return nil, fmt.Errorf("unknown Profile field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProfileMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case profile.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case profile.FieldAvatarURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetAvatarURL(v)
+		return nil
+	case profile.FieldGithubURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetGithubURL(v)
+		return nil
+	case profile.FieldLocation:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLocation(v)
+		return nil
+	case profile.FieldBio:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetBio(v)
+		return nil
+	case profile.FieldTwitterUsername:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTwitterUsername(v)
+		return nil
+	case profile.FieldPublicRepo:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPublicRepo(v)
+		return nil
+	case profile.FieldFollowers:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFollowers(v)
+		return nil
+	case profile.FieldFollowing:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetFollowing(v)
+		return nil
+	case profile.FieldLastUpdated:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastUpdated(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Profile field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *ProfileMutation) AddedFields() []string {
+	var fields []string
+	if m.addpublic_repo != nil {
+		fields = append(fields, profile.FieldPublicRepo)
+	}
+	if m.addfollowers != nil {
+		fields = append(fields, profile.FieldFollowers)
+	}
+	if m.addfollowing != nil {
+		fields = append(fields, profile.FieldFollowing)
+	}
+	return fields
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *ProfileMutation) AddedField(name string) (ent.Value, bool) {
+	switch name {
+	case profile.FieldPublicRepo:
+		return m.AddedPublicRepo()
+	case profile.FieldFollowers:
+		return m.AddedFollowers()
+	case profile.FieldFollowing:
+		return m.AddedFollowing()
+	}
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *ProfileMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	case profile.FieldPublicRepo:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddPublicRepo(v)
+		return nil
+	case profile.FieldFollowers:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFollowers(v)
+		return nil
+	case profile.FieldFollowing:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddFollowing(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Profile numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *ProfileMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *ProfileMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *ProfileMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Profile nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *ProfileMutation) ResetField(name string) error {
+	switch name {
+	case profile.FieldName:
+		m.ResetName()
+		return nil
+	case profile.FieldAvatarURL:
+		m.ResetAvatarURL()
+		return nil
+	case profile.FieldGithubURL:
+		m.ResetGithubURL()
+		return nil
+	case profile.FieldLocation:
+		m.ResetLocation()
+		return nil
+	case profile.FieldBio:
+		m.ResetBio()
+		return nil
+	case profile.FieldTwitterUsername:
+		m.ResetTwitterUsername()
+		return nil
+	case profile.FieldPublicRepo:
+		m.ResetPublicRepo()
+		return nil
+	case profile.FieldFollowers:
+		m.ResetFollowers()
+		return nil
+	case profile.FieldFollowing:
+		m.ResetFollowing()
+		return nil
+	case profile.FieldLastUpdated:
+		m.ResetLastUpdated()
+		return nil
+	}
+	return fmt.Errorf("unknown Profile field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *ProfileMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *ProfileMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *ProfileMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *ProfileMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *ProfileMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *ProfileMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *ProfileMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Profile unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *ProfileMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Profile edge %s", name)
+}
+
+// RepoMutation represents an operation that mutates the Repo nodes in the graph.
+type RepoMutation struct {
+	config
+	op            Op
+	typ           string
+	id            *int
+	name          *string
+	repo_name     *string
+	url           *string
+	description   *string
+	language      *string
+	last_updated  *time.Time
+	clearedFields map[string]struct{}
+	done          bool
+	oldValue      func(context.Context) (*Repo, error)
+	predicates    []predicate.Repo
+}
+
+var _ ent.Mutation = (*RepoMutation)(nil)
+
+// repoOption allows management of the mutation configuration using functional options.
+type repoOption func(*RepoMutation)
+
+// newRepoMutation creates new mutation for the Repo entity.
+func newRepoMutation(c config, op Op, opts ...repoOption) *RepoMutation {
+	m := &RepoMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeRepo,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withRepoID sets the ID field of the mutation.
+func withRepoID(id int) repoOption {
+	return func(m *RepoMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *Repo
+		)
+		m.oldValue = func(ctx context.Context) (*Repo, error) {
+			once.Do(func() {
+				if m.done {
+					err = fmt.Errorf("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().Repo.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withRepo sets the old Repo of the mutation.
+func withRepo(node *Repo) repoOption {
+	return func(m *RepoMutation) {
+		m.oldValue = func(context.Context) (*Repo, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m RepoMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m RepoMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, fmt.Errorf("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// ID returns the ID value in the mutation. Note that the ID
+// is only available if it was provided to the builder.
+func (m *RepoMutation) ID() (id int, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// SetName sets the "name" field.
+func (m *RepoMutation) SetName(s string) {
+	m.name = &s
+}
+
+// Name returns the value of the "name" field in the mutation.
+func (m *RepoMutation) Name() (r string, exists bool) {
+	v := m.name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldName returns the old "name" field's value of the Repo entity.
+// If the Repo object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoMutation) OldName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldName: %w", err)
+	}
+	return oldValue.Name, nil
+}
+
+// ResetName resets all changes to the "name" field.
+func (m *RepoMutation) ResetName() {
+	m.name = nil
+}
+
+// SetRepoName sets the "repo_name" field.
+func (m *RepoMutation) SetRepoName(s string) {
+	m.repo_name = &s
+}
+
+// RepoName returns the value of the "repo_name" field in the mutation.
+func (m *RepoMutation) RepoName() (r string, exists bool) {
+	v := m.repo_name
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRepoName returns the old "repo_name" field's value of the Repo entity.
+// If the Repo object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoMutation) OldRepoName(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldRepoName is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldRepoName requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRepoName: %w", err)
+	}
+	return oldValue.RepoName, nil
+}
+
+// ResetRepoName resets all changes to the "repo_name" field.
+func (m *RepoMutation) ResetRepoName() {
+	m.repo_name = nil
+}
+
+// SetURL sets the "url" field.
+func (m *RepoMutation) SetURL(s string) {
+	m.url = &s
+}
+
+// URL returns the value of the "url" field in the mutation.
+func (m *RepoMutation) URL() (r string, exists bool) {
+	v := m.url
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldURL returns the old "url" field's value of the Repo entity.
+// If the Repo object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoMutation) OldURL(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldURL is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldURL requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldURL: %w", err)
+	}
+	return oldValue.URL, nil
+}
+
+// ResetURL resets all changes to the "url" field.
+func (m *RepoMutation) ResetURL() {
+	m.url = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *RepoMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *RepoMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the Repo entity.
+// If the Repo object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *RepoMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetLanguage sets the "language" field.
+func (m *RepoMutation) SetLanguage(s string) {
+	m.language = &s
+}
+
+// Language returns the value of the "language" field in the mutation.
+func (m *RepoMutation) Language() (r string, exists bool) {
+	v := m.language
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLanguage returns the old "language" field's value of the Repo entity.
+// If the Repo object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoMutation) OldLanguage(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldLanguage is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldLanguage requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLanguage: %w", err)
+	}
+	return oldValue.Language, nil
+}
+
+// ResetLanguage resets all changes to the "language" field.
+func (m *RepoMutation) ResetLanguage() {
+	m.language = nil
+}
+
+// SetLastUpdated sets the "last_updated" field.
+func (m *RepoMutation) SetLastUpdated(t time.Time) {
+	m.last_updated = &t
+}
+
+// LastUpdated returns the value of the "last_updated" field in the mutation.
+func (m *RepoMutation) LastUpdated() (r time.Time, exists bool) {
+	v := m.last_updated
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldLastUpdated returns the old "last_updated" field's value of the Repo entity.
+// If the Repo object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RepoMutation) OldLastUpdated(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, fmt.Errorf("OldLastUpdated is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, fmt.Errorf("OldLastUpdated requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldLastUpdated: %w", err)
+	}
+	return oldValue.LastUpdated, nil
+}
+
+// ResetLastUpdated resets all changes to the "last_updated" field.
+func (m *RepoMutation) ResetLastUpdated() {
+	m.last_updated = nil
+}
+
+// Op returns the operation name.
+func (m *RepoMutation) Op() Op {
+	return m.op
+}
+
+// Type returns the node type of this mutation (Repo).
+func (m *RepoMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *RepoMutation) Fields() []string {
+	fields := make([]string, 0, 6)
+	if m.name != nil {
+		fields = append(fields, repo.FieldName)
+	}
+	if m.repo_name != nil {
+		fields = append(fields, repo.FieldRepoName)
+	}
+	if m.url != nil {
+		fields = append(fields, repo.FieldURL)
+	}
+	if m.description != nil {
+		fields = append(fields, repo.FieldDescription)
+	}
+	if m.language != nil {
+		fields = append(fields, repo.FieldLanguage)
+	}
+	if m.last_updated != nil {
+		fields = append(fields, repo.FieldLastUpdated)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *RepoMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case repo.FieldName:
+		return m.Name()
+	case repo.FieldRepoName:
+		return m.RepoName()
+	case repo.FieldURL:
+		return m.URL()
+	case repo.FieldDescription:
+		return m.Description()
+	case repo.FieldLanguage:
+		return m.Language()
+	case repo.FieldLastUpdated:
+		return m.LastUpdated()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *RepoMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case repo.FieldName:
+		return m.OldName(ctx)
+	case repo.FieldRepoName:
+		return m.OldRepoName(ctx)
+	case repo.FieldURL:
+		return m.OldURL(ctx)
+	case repo.FieldDescription:
+		return m.OldDescription(ctx)
+	case repo.FieldLanguage:
+		return m.OldLanguage(ctx)
+	case repo.FieldLastUpdated:
+		return m.OldLastUpdated(ctx)
+	}
+	return nil, fmt.Errorf("unknown Repo field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RepoMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case repo.FieldName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetName(v)
+		return nil
+	case repo.FieldRepoName:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRepoName(v)
+		return nil
+	case repo.FieldURL:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetURL(v)
+		return nil
+	case repo.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case repo.FieldLanguage:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLanguage(v)
+		return nil
+	case repo.FieldLastUpdated:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetLastUpdated(v)
+		return nil
+	}
+	return fmt.Errorf("unknown Repo field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *RepoMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *RepoMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *RepoMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown Repo numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *RepoMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *RepoMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *RepoMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown Repo nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *RepoMutation) ResetField(name string) error {
+	switch name {
+	case repo.FieldName:
+		m.ResetName()
+		return nil
+	case repo.FieldRepoName:
+		m.ResetRepoName()
+		return nil
+	case repo.FieldURL:
+		m.ResetURL()
+		return nil
+	case repo.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case repo.FieldLanguage:
+		m.ResetLanguage()
+		return nil
+	case repo.FieldLastUpdated:
+		m.ResetLastUpdated()
+		return nil
+	}
+	return fmt.Errorf("unknown Repo field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *RepoMutation) AddedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *RepoMutation) AddedIDs(name string) []ent.Value {
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *RepoMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *RepoMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *RepoMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 0)
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *RepoMutation) EdgeCleared(name string) bool {
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *RepoMutation) ClearEdge(name string) error {
+	return fmt.Errorf("unknown Repo unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *RepoMutation) ResetEdge(name string) error {
+	return fmt.Errorf("unknown Repo edge %s", name)
 }

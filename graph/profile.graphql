@@ -1,0 +1,20 @@
+type Profile {
+    avatarURL: String!
+    githubURL: String!
+    name: String!
+    location: String!
+    bio: String!
+    twitterUsername: String!
+    reposCount: Int!
+    followers: Int!
+    following: Int!
+}
+
+type Repo {
+    id: ID!
+    name: String!
+    repoName: String!
+    url: String!
+    description: String!
+    language: String
+}

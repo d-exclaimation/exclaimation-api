@@ -14,6 +14,10 @@ type Tx struct {
 	config
 	// Post is the client for interacting with the Post builders.
 	Post *PostClient
+	// Profile is the client for interacting with the Profile builders.
+	Profile *ProfileClient
+	// Repo is the client for interacting with the Repo builders.
+	Repo *RepoClient
 
 	// lazily loaded.
 	client     *Client
@@ -150,6 +154,8 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Post = NewPostClient(tx.config)
+	tx.Profile = NewProfileClient(tx.config)
+	tx.Repo = NewRepoClient(tx.config)
 }
 
 // txDriver wraps the given dialect.Tx with a nop dialect.Driver implementation.

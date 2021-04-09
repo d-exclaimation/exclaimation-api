@@ -8,3 +8,9 @@ import (
 
 // Post is the predicate function for post builders.
 type Post func(*sql.Selector)
+
+// Profile is the predicate function for profile builders.
+type Profile func(*sql.Selector)
+
+// Repo is the predicate function for repo builders.
+type Repo func(*sql.Selector)
