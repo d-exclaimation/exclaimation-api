@@ -44,6 +44,11 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Language struct {
+		Lang       func(childComplexity int) int
+		Percentage func(childComplexity int) int
+	}
+
 	Mutation struct {
 		DeletePost        func(childComplexity int, id int) int
 		IncrementCrabRave func(childComplexity int, id int) int
@@ -84,6 +89,7 @@ type ComplexityRoot struct {
 		Posts   func(childComplexity int, limit int, by string) int
 		Profile func(childComplexity int) int
 		Repos   func(childComplexity int, limit int) int
+		TopLang func(childComplexity int) int
 	}
 
 	Repo struct {
@@ -112,6 +118,7 @@ type QueryResolver interface {
 	Posts(ctx context.Context, limit int, by string) ([]*model.Post, error)
 	Profile(ctx context.Context) (*model.Profile, error)
 	Repos(ctx context.Context, limit int) ([]*model.Repo, error)
+	TopLang(ctx context.Context) (*model.Language, error)
 	Me(ctx context.Context) (*string, error)
 }
 
@@ -129,6 +136,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Language.lang":
+		if e.complexity.Language.Lang == nil {
+			break
+		}
+
+		return e.complexity.Language.Lang(childComplexity), true
+
+	case "Language.percentage":
+		if e.complexity.Language.Percentage == nil {
+			break
+		}
+
+		return e.complexity.Language.Percentage(childComplexity), true
 
 	case "Mutation.deletePost":
 		if e.complexity.Mutation.DeletePost == nil {
@@ -359,6 +380,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Repos(childComplexity, args["limit"].(int)), true
 
+	case "Query.topLang":
+		if e.complexity.Query.TopLang == nil {
+			break
+		}
+
+		return e.complexity.Query.TopLang(childComplexity), true
+
 	case "Repo.description":
 		if e.complexity.Repo.Description == nil {
 			break
@@ -504,6 +532,11 @@ type Repo {
     language: String
 }
 
+type Language {
+    lang: String!
+    percentage: Float!
+}
+
 input PasswordInput {
     time: String!
     pass: String!
@@ -513,6 +546,7 @@ input PasswordInput {
     posts(limit: Int!, by: String!): [Post!]!
     profile: Profile!
     repos(limit: Int!): [Repo!]!
+    topLang: Language!
     me: String
 }
 
@@ -720,6 +754,76 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Language_lang(ctx context.Context, field graphql.CollectedField, obj *model.Language) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Language",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Lang, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Language_percentage(ctx context.Context, field graphql.CollectedField, obj *model.Language) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Language",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Percentage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Mutation_loginAsAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
@@ -1682,6 +1786,41 @@ func (ec *executionContext) _Query_repos(ctx context.Context, field graphql.Coll
 	res := resTmp.([]*model.Repo)
 	fc.Result = res
 	return ec.marshalNRepo2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐRepoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_topLang(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().TopLang(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Language)
+	fc.Result = res
+	return ec.marshalNLanguage2ᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐLanguage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3145,6 +3284,38 @@ func (ec *executionContext) unmarshalInputPostDTO(ctx context.Context, obj inter
 
 // region    **************************** object.gotpl ****************************
 
+var languageImplementors = []string{"Language"}
+
+func (ec *executionContext) _Language(ctx context.Context, sel ast.SelectionSet, obj *model.Language) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, languageImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Language")
+		case "lang":
+			out.Values[i] = ec._Language_lang(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "percentage":
+			out.Values[i] = ec._Language_percentage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -3428,6 +3599,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_repos(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "topLang":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_topLang(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -3768,6 +3953,21 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
+	res, err := graphql.UnmarshalFloat(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
+	res := graphql.MarshalFloat(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -3796,6 +3996,20 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNLanguage2githubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐLanguage(ctx context.Context, sel ast.SelectionSet, v model.Language) graphql.Marshaler {
+	return ec._Language(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNLanguage2ᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐLanguage(ctx context.Context, sel ast.SelectionSet, v *model.Language) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Language(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNPasswordInput2githubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPasswordInput(ctx context.Context, v interface{}) (model.PasswordInput, error) {

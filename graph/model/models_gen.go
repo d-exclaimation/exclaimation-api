@@ -2,6 +2,11 @@
 
 package model
 
+type Language struct {
+	Lang       string  `json:"lang"`
+	Percentage float64 `json:"percentage"`
+}
+
 type PasswordInput struct {
 	Time string `json:"time"`
 	Pass string `json:"pass"`

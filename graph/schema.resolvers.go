@@ -5,13 +5,12 @@ package graph
 
 import (
 	"context"
-	"log"
-
 	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	e "github.com/d-exclaimation/exclaimation-api/server/errors"
 	"github.com/d-exclaimation/exclaimation-api/server/libs"
+	"log"
 )
 
 func (r *mutationResolver) LoginAsAdmin(ctx context.Context, options model.PasswordInput) (string, error) {
@@ -108,6 +107,14 @@ func (r *queryResolver) Repos(ctx context.Context, limit int) ([]*model.Repo, er
 		return nil, err
 	}
 	return res.ToGraphQLs(), nil
+}
+
+func (r *queryResolver) TopLang(ctx context.Context) (*model.Language, error) {
+	top, percent := r.profile.GetTopLang(ctx)
+	return &model.Language{
+		Lang:       top,
+		Percentage: percent,
+	}, nil
 }
 
 func (r *queryResolver) Me(ctx context.Context) (*string, error) {

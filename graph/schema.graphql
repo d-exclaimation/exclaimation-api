@@ -3,6 +3,7 @@ type Query {
     posts(limit: Int!, by: String!): [Post!]!
     profile: Profile!
     repos(limit: Int!): [Repo!]!
+    topLang: Language!
     me: String
 }
 

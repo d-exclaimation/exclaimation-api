@@ -14,6 +14,7 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/ent"
 	"github.com/d-exclaimation/exclaimation-api/server/libs"
 	"github.com/d-exclaimation/exclaimation-api/server/models/raw"
+	"sort"
 	"time"
 )
 
@@ -30,14 +31,14 @@ func ProfileServiceProvider(client *ent.Client) *ProfileService {
 
 // GetProfile and Helper functions
 func (t *ProfileService) GetProfile(ctx context.Context) (*ent.Profile, error) {
-	// Grab from database, ok
+	// Grab from database if exist, and check for stale data
 	stale := false
 	res, err := t.queryProfile(ctx)
 	if err != nil {
 		stale = true
 	}
 
-	// Check for timing
+	// Check for timing (A bit explicit)
 	twelve, _ := time.ParseDuration(config.GetRefreshRate())
 	if res != nil && time.Now().After(res.LastUpdated.Add(twelve)) {
 		stale = true
@@ -46,7 +47,12 @@ func (t *ProfileService) GetProfile(ctx context.Context) (*ent.Profile, error) {
 	// Re-fetch data, ok
 	if stale {
 		data, fail := t.fetchProfile()
+
+		// Failure to fetch, if stale exist, return stale data. Otherwise, tell failure
 		if fail != nil {
+			if res != nil {
+				return res, nil
+			}
 			return nil, fail
 		}
 
@@ -122,8 +128,9 @@ func (t *ProfileService) fetchProfile() (*raw.Profile, error) {
 
 // GetAllRepos and Helper methods
 func (t *ProfileService) GetAllRepos(ctx context.Context, limit int) (ent.Repos, error) {
-	// Get from database
+	// Get from database, if exist and if not stale
 	stale := false
+	res := make(ent.Repos, 0)
 	rep, err := t.getOneRepo(ctx)
 	if err != nil {
 		stale = true
@@ -133,27 +140,62 @@ func (t *ProfileService) GetAllRepos(ctx context.Context, limit int) (ent.Repos,
 	if rep != nil && time.Now().After(rep.LastUpdated.Add(twelve)) {
 		stale = true
 	}
-	res := make(ent.Repos, 0)
-	// if stale, re-fetch
-	if stale {
-		data, fail := t.fetchRepos()
-		if fail != nil {
-			return nil, fail
-		}
 
-		// if state, update or create
+	// if stale, re-fetch
+	data, fail := make(raw.Repos, 0), err
+	if stale {
+		data, fail = t.fetchRepos()
+	}
+
+	// if fetch fails and there is no previous, throw error
+	if fail != nil && err != nil {
+		return nil, fail
+	}
+
+	// if stale, does not fail to fetch, do updates
+	if stale && fail == nil {
 		res, err = t.updateReposIsh(ctx, rep != nil, data)
-		if len(res) > limit {
-			res = res[:limit]
-		}
+		if len(res) > limit { res = res[:limit] }
+
+	// else (not stale or stale but fetch fail) do query only
 	} else {
 		res, err = t.getRepos(ctx, limit)
 	}
-	
+
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
+}
+
+func (t *ProfileService) GetTopLang(ctx context.Context) (lang string, percentage float64) {
+	repos, err := t.GetAllRepos(ctx, 100)
+	if err != nil {
+		return "English", 69.420
+	}
+
+	langs := make(map[string]int)
+	for _, rep := range repos {
+		prev, exist := langs[rep.Language]
+		if !exist { prev = 0 }
+		langs[rep.Language] = prev + 1
+	}
+
+	ranking := make([]string, len(langs))
+	k := 0
+	for lang := range langs {
+		ranking[k] = lang
+		k++
+	}
+
+	sort.Slice(ranking, func(i, j int) bool {
+		lhs, rhs := langs[ranking[i]], langs[ranking[j]]
+		return lhs > rhs
+	})
+	if len(ranking) < 1 {
+		return "English", 69.420
+	}
+	return ranking[0], (float64(langs[ranking[0]]) / float64(len(repos))) * 100
 }
 
 func (t *ProfileService) getOneRepo(ctx context.Context) (*ent.Repo, error) {
@@ -193,7 +235,7 @@ func (t *ProfileService) updateReposIsh(ctx context.Context, wipe bool, data raw
 		bulk[i] = t.client.Repo.Create().
 			SetRepoName(dat.FullName).
 			SetName(dat.Name).
-			SetURL(dat.URL).
+			SetURL(dat.HTMLURL).
 			SetLanguage(lang).
 			SetDescription(dat.Description).
 			SetLastUpdated(time.Now())
