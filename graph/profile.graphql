@@ -18,3 +18,8 @@ type Repo {
     description: String!
     language: String
 }
+
+input PasswordInput {
+    time: String!
+    pass: String!
+}

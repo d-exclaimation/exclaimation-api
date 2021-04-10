@@ -16,7 +16,7 @@ import (
 
 const echoContext = "EchoContextKey"
 
-// Echo Context Middleware
+// EchoContextMiddleware Echo Context Middleware
 func EchoContextMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(ctx echo.Context) error {
 		newContext := context.WithValue(ctx.Request().Context(), echoContext, ctx)
@@ -25,7 +25,7 @@ func EchoContextMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-// Extract Context
+// EchoFromContext Extract Context
 func EchoFromContext(ctx context.Context) (echo.Context, error) {
 	con := ctx.Value(echoContext)
 	if con == nil {

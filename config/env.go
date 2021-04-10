@@ -42,13 +42,6 @@ func GetPort() string {
 	return port
 }
 
-func GetKey() string {
-	key := os.Getenv("ACCESS_TOKEN")
-	if key == "" || len(key) < 1 {
-		key = "no-key"
-	}
-	return key
-}
 
 func GetProfileURL() string {
 	url := os.Getenv("GITHUB")

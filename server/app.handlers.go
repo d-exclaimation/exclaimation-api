@@ -27,9 +27,10 @@ type AppHandlers struct {
 func AppHandlersProvider(module generated.Config) *AppHandlers {
 	return &AppHandlers{
 		Middlewares: []echo.MiddlewareFunc{
-			middleware.EchoContextMiddleware,
 			middleware.EndPointLoggerMiddleware,
 			middleware.CorsMiddleware,
+			middleware.SessionMiddleware,
+			middleware.EchoContextMiddleware,
 		},
 		GQLHandler:  GraphqlHandler(module),
 		Playground:  PlaygroundHandler(),

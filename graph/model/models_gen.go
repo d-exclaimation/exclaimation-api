@@ -2,6 +2,11 @@
 
 package model
 
+type PasswordInput struct {
+	Time string `json:"time"`
+	Pass string `json:"pass"`
+}
+
 type PostDto struct {
 	Title string `json:"title"`
 	Body  string `json:"body"`

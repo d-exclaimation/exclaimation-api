@@ -45,10 +45,11 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Mutation struct {
-		DeletePost        func(childComplexity int, id int, key string) int
+		DeletePost        func(childComplexity int, id int) int
 		IncrementCrabRave func(childComplexity int, id int) int
-		NewPost           func(childComplexity int, input model.PostDto, key string) int
-		UpdatePost        func(childComplexity int, id int, input model.PostDto, key string) int
+		LoginAsAdmin      func(childComplexity int, options model.PasswordInput) int
+		NewPost           func(childComplexity int, input model.PostDto) int
+		UpdatePost        func(childComplexity int, id int, input model.PostDto) int
 	}
 
 	Post struct {
@@ -78,6 +79,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		Me      func(childComplexity int) int
 		Post    func(childComplexity int, id int) int
 		Posts   func(childComplexity int, limit int, by string) int
 		Profile func(childComplexity int) int
@@ -95,10 +97,11 @@ type ComplexityRoot struct {
 }
 
 type MutationResolver interface {
-	NewPost(ctx context.Context, input model.PostDto, key string) (*model.Post, error)
-	UpdatePost(ctx context.Context, id int, input model.PostDto, key string) (*model.Post, error)
+	LoginAsAdmin(ctx context.Context, options model.PasswordInput) (string, error)
+	NewPost(ctx context.Context, input model.PostDto) (*model.Post, error)
+	UpdatePost(ctx context.Context, id int, input model.PostDto) (*model.Post, error)
 	IncrementCrabRave(ctx context.Context, id int) (*model.Post, error)
-	DeletePost(ctx context.Context, id int, key string) (*model.Post, error)
+	DeletePost(ctx context.Context, id int) (*model.Post, error)
 }
 type PostResolver interface {
 	Snippet(ctx context.Context, obj *model.Post) (string, error)
@@ -109,6 +112,7 @@ type QueryResolver interface {
 	Posts(ctx context.Context, limit int, by string) ([]*model.Post, error)
 	Profile(ctx context.Context) (*model.Profile, error)
 	Repos(ctx context.Context, limit int) ([]*model.Repo, error)
+	Me(ctx context.Context) (*string, error)
 }
 
 type executableSchema struct {
@@ -136,7 +140,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeletePost(childComplexity, args["id"].(int), args["key"].(string)), true
+		return e.complexity.Mutation.DeletePost(childComplexity, args["id"].(int)), true
 
 	case "Mutation.incrementCrabRave":
 		if e.complexity.Mutation.IncrementCrabRave == nil {
@@ -150,6 +154,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.IncrementCrabRave(childComplexity, args["id"].(int)), true
 
+	case "Mutation.loginAsAdmin":
+		if e.complexity.Mutation.LoginAsAdmin == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_loginAsAdmin_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.LoginAsAdmin(childComplexity, args["options"].(model.PasswordInput)), true
+
 	case "Mutation.newPost":
 		if e.complexity.Mutation.NewPost == nil {
 			break
@@ -160,7 +176,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.NewPost(childComplexity, args["input"].(model.PostDto), args["key"].(string)), true
+		return e.complexity.Mutation.NewPost(childComplexity, args["input"].(model.PostDto)), true
 
 	case "Mutation.updatePost":
 		if e.complexity.Mutation.UpdatePost == nil {
@@ -172,7 +188,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdatePost(childComplexity, args["id"].(int), args["input"].(model.PostDto), args["key"].(string)), true
+		return e.complexity.Mutation.UpdatePost(childComplexity, args["id"].(int), args["input"].(model.PostDto)), true
 
 	case "Post.body":
 		if e.complexity.Post.Body == nil {
@@ -292,6 +308,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Profile.TwitterUsername(childComplexity), true
+
+	case "Query.me":
+		if e.complexity.Query.Me == nil {
+			break
+		}
+
+		return e.complexity.Query.Me(childComplexity), true
 
 	case "Query.post":
 		if e.complexity.Query.Post == nil {
@@ -479,19 +502,26 @@ type Repo {
     url: String!
     description: String!
     language: String
+}
+
+input PasswordInput {
+    time: String!
+    pass: String!
 }`, BuiltIn: false},
 	{Name: "graph/schema.graphql", Input: `type Query {
     post(id: Int!): Post
     posts(limit: Int!, by: String!): [Post!]!
     profile: Profile!
     repos(limit: Int!): [Repo!]!
+    me: String
 }
 
 type Mutation {
-    newPost(input: PostDTO!, key: String!): Post!
-    updatePost(id: Int!, input: PostDTO!, key: String!): Post!
+    loginAsAdmin(options: PasswordInput!): String!
+    newPost(input: PostDTO!): Post!
+    updatePost(id: Int!, input: PostDTO!): Post!
     incrementCrabRave(id: Int!): Post!
-    deletePost(id: Int!, key: String!): Post!
+    deletePost(id: Int!): Post!
 }`, BuiltIn: false},
 }
 var parsedSchema = gqlparser.MustLoadSchema(sources...)
@@ -512,15 +542,6 @@ func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, 
 		}
 	}
 	args["id"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["key"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["key"] = arg1
 	return args, nil
 }
 
@@ -539,6 +560,21 @@ func (ec *executionContext) field_Mutation_incrementCrabRave_args(ctx context.Co
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_loginAsAdmin_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.PasswordInput
+	if tmp, ok := rawArgs["options"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("options"))
+		arg0, err = ec.unmarshalNPasswordInput2githubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPasswordInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["options"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_newPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -551,15 +587,6 @@ func (ec *executionContext) field_Mutation_newPost_args(ctx context.Context, raw
 		}
 	}
 	args["input"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["key"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["key"] = arg1
 	return args, nil
 }
 
@@ -584,15 +611,6 @@ func (ec *executionContext) field_Mutation_updatePost_args(ctx context.Context, 
 		}
 	}
 	args["input"] = arg1
-	var arg2 string
-	if tmp, ok := rawArgs["key"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("key"))
-		arg2, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["key"] = arg2
 	return args, nil
 }
 
@@ -703,6 +721,48 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _Mutation_loginAsAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_loginAsAdmin_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().LoginAsAdmin(rctx, args["options"].(model.PasswordInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_newPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -728,7 +788,7 @@ func (ec *executionContext) _Mutation_newPost(ctx context.Context, field graphql
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().NewPost(rctx, args["input"].(model.PostDto), args["key"].(string))
+		return ec.resolvers.Mutation().NewPost(rctx, args["input"].(model.PostDto))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -770,7 +830,7 @@ func (ec *executionContext) _Mutation_updatePost(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdatePost(rctx, args["id"].(int), args["input"].(model.PostDto), args["key"].(string))
+		return ec.resolvers.Mutation().UpdatePost(rctx, args["id"].(int), args["input"].(model.PostDto))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -854,7 +914,7 @@ func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field grap
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeletePost(rctx, args["id"].(int), args["key"].(string))
+		return ec.resolvers.Mutation().DeletePost(rctx, args["id"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1622,6 +1682,38 @@ func (ec *executionContext) _Query_repos(ctx context.Context, field graphql.Coll
 	res := resTmp.([]*model.Repo)
 	fc.Result = res
 	return ec.marshalNRepo2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐRepoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Me(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2989,6 +3081,34 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputPasswordInput(ctx context.Context, obj interface{}) (model.PasswordInput, error) {
+	var it model.PasswordInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "time":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("time"))
+			it.Time, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "pass":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pass"))
+			it.Pass, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPostDTO(ctx context.Context, obj interface{}) (model.PostDto, error) {
 	var it model.PostDto
 	var asMap = obj.(map[string]interface{})
@@ -3040,6 +3160,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "loginAsAdmin":
+			out.Values[i] = ec._Mutation_loginAsAdmin(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "newPost":
 			out.Values[i] = ec._Mutation_newPost(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -3306,6 +3431,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
+				return res
+			})
+		case "me":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_me(ctx, field)
 				return res
 			})
 		case "__type":
@@ -3660,6 +3796,11 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNPasswordInput2githubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPasswordInput(ctx context.Context, v interface{}) (model.PasswordInput, error) {
+	res, err := ec.unmarshalInputPasswordInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNPost2githubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {

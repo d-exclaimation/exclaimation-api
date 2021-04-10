@@ -3,11 +3,13 @@ type Query {
     posts(limit: Int!, by: String!): [Post!]!
     profile: Profile!
     repos(limit: Int!): [Repo!]!
+    me: String
 }
 
 type Mutation {
-    newPost(input: PostDTO!, key: String!): Post!
-    updatePost(id: Int!, input: PostDTO!, key: String!): Post!
+    loginAsAdmin(options: PasswordInput!): String!
+    newPost(input: PostDTO!): Post!
+    updatePost(id: Int!, input: PostDTO!): Post!
     incrementCrabRave(id: Int!): Post!
-    deletePost(id: Int!, key: String!): Post!
+    deletePost(id: Int!): Post!
 }

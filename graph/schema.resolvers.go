@@ -5,6 +5,8 @@ package graph
 
 import (
 	"context"
+	"log"
+
 	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
@@ -12,8 +14,20 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/server/libs"
 )
 
-func (r *mutationResolver) NewPost(ctx context.Context, input model.PostDto, key string) (*model.Post, error) {
-	if key != config.GetKey() {
+func (r *mutationResolver) LoginAsAdmin(ctx context.Context, options model.PasswordInput) (string, error) {
+	log.Printf("[INFO] Admin logged in, at %s\n", options.Time)
+	if config.GetKey() != options.Pass {
+		return "", e.InvalidKeyError()
+	}
+	return libs.GiveTheCookie(ctx, options.Pass)
+}
+
+func (r *mutationResolver) NewPost(ctx context.Context, input model.PostDto) (*model.Post, error) {
+	comp, err := libs.StealTheCookie(ctx, config.GetKey())
+	if err != nil {
+		return nil, e.InvalidKeyError()
+	}
+	if *comp != config.GetComputedKey() {
 		return nil, e.InvalidKeyError()
 	}
 
@@ -24,10 +38,15 @@ func (r *mutationResolver) NewPost(ctx context.Context, input model.PostDto, key
 	return res.ToGraphQL(), nil
 }
 
-func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input model.PostDto, key string) (*model.Post, error) {
-	if key != config.GetKey() {
+func (r *mutationResolver) UpdatePost(ctx context.Context, id int, input model.PostDto) (*model.Post, error) {
+	comp, err := libs.StealTheCookie(ctx, config.GetKey())
+	if err != nil {
 		return nil, e.InvalidKeyError()
 	}
+	if *comp != config.GetComputedKey() {
+		return nil, e.InvalidKeyError()
+	}
+
 	res, err := r.post.UpdateOne(ctx, id, input)
 	if err != nil {
 		return nil, err
@@ -43,8 +62,12 @@ func (r *mutationResolver) IncrementCrabRave(ctx context.Context, id int) (*mode
 	return res.ToGraphQL(), err
 }
 
-func (r *mutationResolver) DeletePost(ctx context.Context, id int, key string) (*model.Post, error) {
-	if key != config.GetKey() {
+func (r *mutationResolver) DeletePost(ctx context.Context, id int) (*model.Post, error) {
+	comp, err := libs.StealTheCookie(ctx, config.GetKey())
+	if err != nil {
+		return nil, e.InvalidKeyError()
+	}
+	if *comp != config.GetComputedKey() {
 		return nil, e.InvalidKeyError()
 	}
 
@@ -85,6 +108,10 @@ func (r *queryResolver) Repos(ctx context.Context, limit int) ([]*model.Repo, er
 		return nil, err
 	}
 	return res.ToGraphQLs(), nil
+}
+
+func (r *queryResolver) Me(ctx context.Context) (*string, error) {
+	return libs.StealTheCookie(ctx, config.GetKey())
 }
 
 // Mutation returns generated.MutationResolver implementation.

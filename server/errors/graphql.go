@@ -16,3 +16,7 @@ import (
 func InvalidKeyError() error {
 	return NewServiceError(http.StatusForbidden, "Invalid Key")
 }
+
+func NotLoggedInError() error {
+	return NewServiceError(http.StatusBadRequest, "Not Logged In with Authorized Permission")
+}

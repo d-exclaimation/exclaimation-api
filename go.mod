@@ -6,9 +6,13 @@ require (
 	entgo.io/ent v0.7.0
 	github.com/99designs/gqlgen v0.13.0
 	github.com/agnivade/levenshtein v1.1.0 // indirect
+	github.com/boj/redistore v0.0.0-20180917114910-cd5dcc76aeff // indirect
+	github.com/casbin/casbin v1.8.2 // indirect
 	github.com/gookit/color v1.3.8
+	github.com/gorilla/sessions v1.2.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/joho/godotenv v1.3.0
+	github.com/labstack/echo-contrib v0.9.0 // indirect
 	github.com/labstack/echo/v4 v4.2.1
 	github.com/lib/pq v1.10.0
 	github.com/mattn/go-colorable v0.1.8 // indirect
