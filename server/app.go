@@ -20,7 +20,7 @@ const (
 	entry = "/"
 )
 
-// Fx Provider
+// AppProvider Fx Provider
 func AppProvider(lifecycle fx.Lifecycle) *echo.Echo {
 	app := echo.New()
 	port := config.GetPort()
@@ -41,15 +41,21 @@ func AppProvider(lifecycle fx.Lifecycle) *echo.Echo {
 	return app
 }
 
-// Fx Invoke Middleware
+// InvokeMiddleWare Fx Invoke Middleware
 func InvokeMiddleWare(app *echo.Echo, handlers *AppHandlers) {
 	for _, mw := range handlers.Middlewares {
 		app.Use(mw)
 	}
 }
 
-// Fx Invoke Handler
+// InvokeHandler Fx Invoke Handler
 func InvokeHandler(app *echo.Echo, handlers *AppHandlers) {
+	// Assign the uri, to the graphql handler
 	app.POST(graphqlPath, handlers.GQLHandler)
+
+	// Assign playground only for non-prod, only (some people doesn't spam on the browser)
+	if config.GetServerMode() == config.Prod {
+		return
+	}
 	app.GET(entry, handlers.Playground)
 }
