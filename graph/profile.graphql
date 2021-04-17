@@ -1,4 +1,5 @@
 type Profile {
+    id: ID!
     avatarURL: String!
     githubURL: String!
     name: String!
@@ -20,6 +21,7 @@ type Repo {
 }
 
 type Language {
+    id: ID!
     lang: String!
     percentage: Float!
 }

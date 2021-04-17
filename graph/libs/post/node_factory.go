@@ -6,16 +6,17 @@
 //  Copyright © 2021 d-exclaimation. All rights reserved.
 //
 
-package libs
+package post
 
 import (
+	"fmt"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	"strings"
 )
 
 type StringArray []string
 
-func CreateGraphQLNode(val string) *model.PostNode {
+func CreateGraphQLNode(val string, i int) *model.PostNode {
 	node := "content"
 	if strings.HasPrefix(val, "#") {
 		node = "header"
@@ -24,15 +25,16 @@ func CreateGraphQLNode(val string) *model.PostNode {
 	}
 
 	return &model.PostNode{
+		ID: fmt.Sprintf("PostNode-%d", i),
 		Type: node,
 		Leaf: val,
 	}
 }
 
-func (t StringArray) ToGraphQLs() []*model.PostNode {
+func ToGraphQLs(t StringArray) []*model.PostNode {
 	res := make([]*model.PostNode, len(t))
 	for i, val := range t {
-		res[i] = CreateGraphQLNode(val)
+		res[i] = CreateGraphQLNode(val, i)
 	}
 	return res
 }

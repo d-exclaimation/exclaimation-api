@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
-	"github.com/d-exclaimation/exclaimation-api/graph/libs"
+	. "github.com/d-exclaimation/exclaimation-api/graph/libs/post"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	"github.com/d-exclaimation/exclaimation-api/utils/pipes"
 	"github.com/d-exclaimation/exclaimation-api/utils/slice"
@@ -23,7 +23,7 @@ func (r *postResolver) Snippet(ctx context.Context, obj *model.Post) (string, er
 }
 
 func (r *postResolver) Nodes(ctx context.Context, obj *model.Post) ([]*model.PostNode, error) {
-	leaves := libs.StringArray(
+	leaves := ToGraphQLs(
 		slice.ReduceStr(
 			strings.Split(obj.Body, "\n"),
 			pipes.IsolateReducer(
@@ -32,7 +32,7 @@ func (r *postResolver) Nodes(ctx context.Context, obj *model.Post) ([]*model.Pos
 					func(row string) bool { return row == "" },
 				},
 			),
-		)).ToGraphQLs()
+		))
 	return leaves, nil
 }
 

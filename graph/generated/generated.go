@@ -45,6 +45,7 @@ type DirectiveRoot struct {
 
 type ComplexityRoot struct {
 	Language struct {
+		ID         func(childComplexity int) int
 		Lang       func(childComplexity int) int
 		Percentage func(childComplexity int) int
 	}
@@ -67,6 +68,7 @@ type ComplexityRoot struct {
 	}
 
 	PostNode struct {
+		ID   func(childComplexity int) int
 		Leaf func(childComplexity int) int
 		Type func(childComplexity int) int
 	}
@@ -77,6 +79,7 @@ type ComplexityRoot struct {
 		Followers       func(childComplexity int) int
 		Following       func(childComplexity int) int
 		GithubURL       func(childComplexity int) int
+		ID              func(childComplexity int) int
 		Location        func(childComplexity int) int
 		Name            func(childComplexity int) int
 		ReposCount      func(childComplexity int) int
@@ -136,6 +139,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Language.id":
+		if e.complexity.Language.ID == nil {
+			break
+		}
+
+		return e.complexity.Language.ID(childComplexity), true
 
 	case "Language.lang":
 		if e.complexity.Language.Lang == nil {
@@ -253,6 +263,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Title(childComplexity), true
 
+	case "PostNode.id":
+		if e.complexity.PostNode.ID == nil {
+			break
+		}
+
+		return e.complexity.PostNode.ID(childComplexity), true
+
 	case "PostNode.leaf":
 		if e.complexity.PostNode.Leaf == nil {
 			break
@@ -301,6 +318,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Profile.GithubURL(childComplexity), true
+
+	case "Profile.id":
+		if e.complexity.Profile.ID == nil {
+			break
+		}
+
+		return e.complexity.Profile.ID(childComplexity), true
 
 	case "Profile.location":
 		if e.complexity.Profile.Location == nil {
@@ -508,10 +532,12 @@ input PostDTO {
 }
 
 type PostNode {
+    id: ID!
     type: String!
     leaf: String!
 }`, BuiltIn: false},
 	{Name: "graph/profile.graphql", Input: `type Profile {
+    id: ID!
     avatarURL: String!
     githubURL: String!
     name: String!
@@ -533,6 +559,7 @@ type Repo {
 }
 
 type Language {
+    id: ID!
     lang: String!
     percentage: Float!
 }
@@ -754,6 +781,41 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _Language_id(ctx context.Context, field graphql.CollectedField, obj *model.Language) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Language",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
 
 func (ec *executionContext) _Language_lang(ctx context.Context, field graphql.CollectedField, obj *model.Language) (ret graphql.Marshaler) {
 	defer func() {
@@ -1245,6 +1307,41 @@ func (ec *executionContext) _Post_nodes(ctx context.Context, field graphql.Colle
 	return ec.marshalNPostNode2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPostNodeᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PostNode_id(ctx context.Context, field graphql.CollectedField, obj *model.PostNode) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostNode",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _PostNode_type(ctx context.Context, field graphql.CollectedField, obj *model.PostNode) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1313,6 +1410,41 @@ func (ec *executionContext) _PostNode_leaf(ctx context.Context, field graphql.Co
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Profile_id(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Profile",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Profile_avatarURL(ctx context.Context, field graphql.CollectedField, obj *model.Profile) (ret graphql.Marshaler) {
@@ -3295,6 +3427,11 @@ func (ec *executionContext) _Language(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Language")
+		case "id":
+			out.Values[i] = ec._Language_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "lang":
 			out.Values[i] = ec._Language_lang(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3448,6 +3585,11 @@ func (ec *executionContext) _PostNode(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PostNode")
+		case "id":
+			out.Values[i] = ec._PostNode_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "type":
 			out.Values[i] = ec._PostNode_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -3480,6 +3622,11 @@ func (ec *executionContext) _Profile(ctx context.Context, sel ast.SelectionSet, 
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Profile")
+		case "id":
+			out.Values[i] = ec._Profile_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "avatarURL":
 			out.Values[i] = ec._Profile_avatarURL(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

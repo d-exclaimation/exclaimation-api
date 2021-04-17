@@ -13,6 +13,9 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 )
 
+// Post Conversion
+
+// ToGraphQL Convert Database entity into GraphQL Schema
 func (po *Post) ToGraphQL() *model.Post {
 	return &model.Post{
 		ID:       fmt.Sprintf("%d", po.ID),
@@ -31,8 +34,12 @@ func (po Posts) ToGraphQLs() []*model.Post {
 	return res
 }
 
+// Profile Conversion
+
+// ToGraphQL Convert Database entity into GraphQL Schema
 func (pr *Profile) ToGraphQL() *model.Profile {
 	return &model.Profile{
+		ID: fmt.Sprintf("Profile-%d", pr.ID),
 		AvatarURL:       pr.AvatarURL,
 		GithubURL:       pr.GithubURL,
 		Name:            pr.Name,
@@ -45,13 +52,16 @@ func (pr *Profile) ToGraphQL() *model.Profile {
 	}
 }
 
+// Repo Conversion
+
+// ToGraphQL Convert Database entity into GraphQL Schema
 func (r *Repo) ToGraphQL() *model.Repo {
 	lang := &r.Language
 	if r.Language == "" {
 		lang = nil
 	}
 	return &model.Repo{
-		ID:          fmt.Sprintf("%d", r.ID),
+		ID:          fmt.Sprintf("Repo-%d", r.ID),
 		Name:        r.Name,
 		RepoName:    r.RepoName,
 		URL:         r.URL,

@@ -3,6 +3,7 @@
 package model
 
 type Language struct {
+	ID         string  `json:"id"`
 	Lang       string  `json:"lang"`
 	Percentage float64 `json:"percentage"`
 }
@@ -18,11 +19,13 @@ type PostDto struct {
 }
 
 type PostNode struct {
+	ID   string `json:"id"`
 	Type string `json:"type"`
 	Leaf string `json:"leaf"`
 }
 
 type Profile struct {
+	ID              string `json:"id"`
 	AvatarURL       string `json:"avatarURL"`
 	GithubURL       string `json:"githubURL"`
 	Name            string `json:"name"`

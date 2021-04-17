@@ -12,7 +12,7 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
-	"github.com/d-exclaimation/exclaimation-api/server/middleware"
+	. "github.com/d-exclaimation/exclaimation-api/server/middleware"
 	"github.com/labstack/echo/v4"
 )
 
@@ -23,21 +23,23 @@ type AppHandlers struct {
 	Playground  echo.HandlerFunc
 }
 
-// Fx Provider
+// AppHandlersProvider Fx Provider
 func AppHandlersProvider(module generated.Config) *AppHandlers {
 	return &AppHandlers{
 		Middlewares: []echo.MiddlewareFunc{
-			middleware.EndPointLoggerMiddleware,
-			middleware.CorsMiddleware,
-			middleware.SessionMiddleware,
-			middleware.EchoContextMiddleware,
+			EndPointLoggerMiddleware,
+			RateLimiterMiddleware,
+			EdgeCaseSecurityMiddleware,
+			CorsMiddleware,
+			SessionMiddleware,
+			EchoContextMiddleware,
 		},
 		GQLHandler:  GraphqlHandler(module),
 		Playground:  PlaygroundHandler(),
 	}
 }
 
-// GraphQL Query Handler
+// GraphqlHandler GraphQL Query Handler
 func GraphqlHandler(module generated.Config) echo.HandlerFunc {
 	graphqlServer := handler.NewDefaultServer(generated.NewExecutableSchema(module))
 	return func(ctx echo.Context) error {
@@ -46,7 +48,7 @@ func GraphqlHandler(module generated.Config) echo.HandlerFunc {
 	}
 }
 
-// Playground Handler
+// PlaygroundHandler Playground Handler
 func PlaygroundHandler() echo.HandlerFunc {
 	playgroundHandler := playground.Handler("Nodes-Graph API Playground", graphqlPath)
 	return func(ctx echo.Context) error {

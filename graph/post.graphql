@@ -13,6 +13,7 @@ input PostDTO {
 }
 
 type PostNode {
+    id: ID!
     type: String!
     leaf: String!
 }

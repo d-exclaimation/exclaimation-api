@@ -5,12 +5,13 @@ package graph
 
 import (
 	"context"
+	"log"
+
 	"github.com/d-exclaimation/exclaimation-api/config"
 	"github.com/d-exclaimation/exclaimation-api/graph/generated"
 	"github.com/d-exclaimation/exclaimation-api/graph/model"
 	e "github.com/d-exclaimation/exclaimation-api/server/errors"
 	"github.com/d-exclaimation/exclaimation-api/server/libs"
-	"log"
 )
 
 func (r *mutationResolver) LoginAsAdmin(ctx context.Context, options model.PasswordInput) (string, error) {
