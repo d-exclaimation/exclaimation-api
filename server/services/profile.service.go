@@ -29,7 +29,9 @@ func ProfileServiceProvider(client *ent.Client) *ProfileService {
 	}
 }
 
-// GetProfile and Helper functions
+/// Section: Profile Fetch Logic
+
+// GetProfile will try to look up profile in the database, if not available or outdated, will do re-fetch onto Github's API
 func (t *ProfileService) GetProfile(ctx context.Context) (*ent.Profile, error) {
 	// Grab from database if exist, and check for stale data
 	stale := false
@@ -69,7 +71,7 @@ func (t *ProfileService) GetProfile(ctx context.Context) (*ent.Profile, error) {
 	return res, nil
 }
 
-
+// Try query profile from the database
 func (t *ProfileService) queryProfile(ctx context.Context) (*ent.Profile, error) {
 	res, err := t.client.Profile.
 		Query().
@@ -80,6 +82,7 @@ func (t *ProfileService) queryProfile(ctx context.Context) (*ent.Profile, error)
 	return res, nil
 }
 
+// Create a new profile record in the database
 func (t *ProfileService) createProfile(ctx context.Context, raw *raw.Profile) (*ent.Profile, error) {
 	res, err := t.client.Profile.Create().
 		SetAvatarURL(raw.AvatarURL).
@@ -99,6 +102,7 @@ func (t *ProfileService) createProfile(ctx context.Context, raw *raw.Profile) (*
 	return res, nil
 }
 
+// Updated existing record of the profile given a outdated record id and the raw fetch result
 func (t *ProfileService) updateProfile(ctx context.Context, id int, raw *raw.Profile) (*ent.Profile, error) {
 	res, err := t.client.Profile.UpdateOneID(id).
 		SetAvatarURL(raw.AvatarURL).
@@ -118,6 +122,7 @@ func (t *ProfileService) updateProfile(ctx context.Context, id int, raw *raw.Pro
 	return res, nil
 }
 
+// Try to fetch to Github's API, the profile information
 func (t *ProfileService) fetchProfile() (*raw.Profile, error) {
 	var profile raw.Profile
 	if err := libs.GetAndParse(config.GetProfileURL(), &profile); err != nil {
@@ -126,7 +131,9 @@ func (t *ProfileService) fetchProfile() (*raw.Profile, error) {
 	return &profile, nil
 }
 
-// GetAllRepos and Helper methods
+// Section: Repos Fetch Logic
+
+// GetAllRepos will try to fetch all repos in the database, but will do checks either to fetch into Github's API
 func (t *ProfileService) GetAllRepos(ctx context.Context, limit int) (ent.Repos, error) {
 	// Get from database, if exist and if not stale
 	stale := false
@@ -168,36 +175,7 @@ func (t *ProfileService) GetAllRepos(ctx context.Context, limit int) (ent.Repos,
 	return res, nil
 }
 
-func (t *ProfileService) GetTopLang(ctx context.Context) (lang string, percentage float64) {
-	repos, err := t.GetAllRepos(ctx, 100)
-	if err != nil {
-		return "English", 69.420
-	}
-
-	langs := make(map[string]int)
-	for _, rep := range repos {
-		prev, exist := langs[rep.Language]
-		if !exist { prev = 0 }
-		langs[rep.Language] = prev + 1
-	}
-
-	ranking := make([]string, len(langs))
-	k := 0
-	for lang := range langs {
-		ranking[k] = lang
-		k++
-	}
-
-	sort.Slice(ranking, func(i, j int) bool {
-		lhs, rhs := langs[ranking[i]], langs[ranking[j]]
-		return lhs > rhs
-	})
-	if len(ranking) < 1 {
-		return "English", 69.420
-	}
-	return ranking[0], (float64(langs[ranking[0]]) / float64(len(repos))) * 100
-}
-
+// Try to query one
 func (t *ProfileService) getOneRepo(ctx context.Context) (*ent.Repo, error) {
 	res, err := t.client.Repo.
 		Query().
@@ -221,9 +199,7 @@ func (t *ProfileService) getRepos(ctx context.Context, limit int) (ent.Repos, er
 
 func (t *ProfileService) updateReposIsh(ctx context.Context, wipe bool, data raw.Repos) (ent.Repos, error) {
 	if wipe {
-		_, err := t.client.Repo.
-			Delete().
-			Exec(ctx)
+		_, err := t.client.DB().Exec("TRUNCATE repos RESTART IDENTITY;")
 		if err != nil {
 			return nil, err
 		}
@@ -253,4 +229,37 @@ func (t *ProfileService) fetchRepos() (raw.Repos, error) {
 		return nil, err
 	}
 	return repos, nil
+}
+
+// Section: Top Lang fetch function
+
+// GetTopLang and Helper Methods
+func (t *ProfileService) GetTopLang(ctx context.Context) (lang string, percentage float64) {
+	repos, err := t.GetAllRepos(ctx, 100)
+	if err != nil {
+		return "English", 69.420
+	}
+
+	langs := make(map[string]int)
+	for _, rep := range repos {
+		prev, exist := langs[rep.Language]
+		if !exist { prev = 0 }
+		langs[rep.Language] = prev + 1
+	}
+
+	ranking := make([]string, len(langs))
+	k := 0
+	for lang := range langs {
+		ranking[k] = lang
+		k++
+	}
+
+	sort.Slice(ranking, func(i, j int) bool {
+		lhs, rhs := langs[ranking[i]], langs[ranking[j]]
+		return lhs > rhs
+	})
+	if len(ranking) < 1 {
+		return "English", 69.420
+	}
+	return ranking[0], (float64(langs[ranking[0]]) / float64(len(repos))) * 100
 }
