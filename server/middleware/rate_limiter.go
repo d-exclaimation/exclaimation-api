@@ -13,6 +13,7 @@ import (
 	em "github.com/labstack/echo/v4/middleware"
 )
 
+// RateLimiterMiddleware limit the rate of request given a value
 func RateLimiterMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return em.RateLimiter(em.NewRateLimiterMemoryStore(20))(next)
 }

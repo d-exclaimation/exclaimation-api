@@ -29,6 +29,7 @@ func PostServiceProvider(client *ent.Client) *PostService {
 	}
 }
 
+// QueryAll get all records given the specific limit and sorting method
 func (t *PostService) QueryAll(ctx context.Context, limit int, by libs.SortBy) (ent.Posts, error) {
 	res, err := t.client.
 		Post.Query().
@@ -41,6 +42,7 @@ func (t *PostService) QueryAll(ctx context.Context, limit int, by libs.SortBy) (
 	return res, nil
 }
 
+// QueryOne get the correct given the ID
 func (t *PostService) QueryOne(ctx context.Context, id int) (*ent.Post, error) {
 	res, err := t.client.Post.
 		Query().
@@ -52,6 +54,7 @@ func (t *PostService) QueryOne(ctx context.Context, id int) (*ent.Post, error) {
 	return res, nil
 }
 
+// CreateNew added a new record given the input model
 func (t *PostService) CreateNew(ctx context.Context, input model.PostDto) (*ent.Post, error) {
 	res, err := t.client.Post.
 		Create().
@@ -64,6 +67,7 @@ func (t *PostService) CreateNew(ctx context.Context, input model.PostDto) (*ent.
 	return res, nil
 }
 
+// UpdateOne updates the given record of the id using the input model
 func (t *PostService) UpdateOne(ctx context.Context, id int, input model.PostDto) (*ent.Post, error) {
 	res, err := t.client.Post.
 		UpdateOneID(id).
@@ -76,6 +80,7 @@ func (t *PostService) UpdateOne(ctx context.Context, id int, input model.PostDto
 	return res, nil
 }
 
+// ChangeRave updates just the crabrave count (likes) to a specific record given a value
 func (t *PostService) ChangeRave(ctx context.Context, id int, value int) (*ent.Post, error) {
 	curr, err := t.client.Post.
 		Query().
@@ -95,6 +100,7 @@ func (t *PostService) ChangeRave(ctx context.Context, id int, value int) (*ent.P
 	return res, nil
 }
 
+// DeleteOne removes a record given the id
 func (t *PostService) DeleteOne(ctx context.Context, id int) (*ent.Post, error) {
 	curr, fail := t.QueryOne(ctx, id)
 	if fail != nil {
@@ -107,4 +113,16 @@ func (t *PostService) DeleteOne(ctx context.Context, id int) (*ent.Post, error) 
 			return nil, errors.NewServiceError(http.StatusInternalServerError, err.Error())
 	}
 	return curr, nil
+}
+
+// GrabLatest fetch the most recent record
+func (t *PostService) GrabLatest(ctx context.Context) (*ent.Post, error) {
+	res, err := t.client.Post.
+		Query().
+		Order(libs.EntOrderBy(libs.ByLatest)).
+		First(ctx)
+	if err != nil {
+	    return nil, errors.NewServiceError(http.StatusInternalServerError, err.Error())
+	}
+	return res, nil
 }

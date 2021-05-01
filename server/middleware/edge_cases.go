@@ -13,6 +13,7 @@ import (
 	em "github.com/labstack/echo/v4/middleware"
 )
 
+// EdgeCaseSecurityMiddleware prevent common security risks
 func EdgeCaseSecurityMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	// TODO: Create proper config
 	return em.Secure()(next)

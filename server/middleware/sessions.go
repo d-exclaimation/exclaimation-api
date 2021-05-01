@@ -15,6 +15,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// SessionMiddleware allowed sending and receiving sessions and sessions tokens
 func SessionMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return ss.Middleware(sessions.NewCookieStore([]byte(config.GetSessionSecret())))(next)
 }

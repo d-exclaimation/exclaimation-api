@@ -94,6 +94,14 @@ func (r *queryResolver) Posts(ctx context.Context, limit int, by string) ([]*mod
 	return res.ToGraphQLs(), nil
 }
 
+func (r *queryResolver) LatestPost(ctx context.Context) (*model.Post, error) {
+	res, err := r.post.GrabLatest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res.ToGraphQL(), err
+}
+
 func (r *queryResolver) Profile(ctx context.Context) (*model.Profile, error) {
 	res, err := r.profile.GetProfile(ctx)
 	if err != nil {
@@ -103,15 +111,23 @@ func (r *queryResolver) Profile(ctx context.Context) (*model.Profile, error) {
 }
 
 func (r *queryResolver) Repos(ctx context.Context, limit int) ([]*model.Repo, error) {
-	res, err := r.profile.GetAllRepos(ctx, limit)
+	res, err := r.repo.GetAllRepos(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
 	return res.ToGraphQLs(), nil
 }
 
+func (r *queryResolver) LatestRepo(ctx context.Context) (*model.Repo, error) {
+	res, err := r.repo.GrabLatest(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return res.ToGraphQL(), nil
+}
+
 func (r *queryResolver) TopLang(ctx context.Context) (*model.Language, error) {
-	top, percent := r.profile.GetTopLang(ctx)
+	top, percent := r.repo.GetTopLang(ctx)
 	return &model.Language{
 		Lang:       top,
 		Percentage: percent,

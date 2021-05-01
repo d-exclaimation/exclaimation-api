@@ -13,6 +13,7 @@ import (
 	"net/http"
 )
 
+// GetAndParse wraps and abstract HTTP GET Request that receive a JSON response
 func GetAndParse(url string, parsed interface{}) error {
 	resp, err := http.Get(url)
 	if err != nil {

@@ -14,7 +14,6 @@ import (
 	"github.com/d-exclaimation/exclaimation-api/ent"
 	"github.com/d-exclaimation/exclaimation-api/server/libs"
 	"github.com/d-exclaimation/exclaimation-api/server/models/raw"
-	"sort"
 	"time"
 )
 
@@ -229,37 +228,4 @@ func (t *ProfileService) fetchRepos() (raw.Repos, error) {
 		return nil, err
 	}
 	return repos, nil
-}
-
-// Section: Top Lang fetch function
-
-// GetTopLang and Helper Methods
-func (t *ProfileService) GetTopLang(ctx context.Context) (lang string, percentage float64) {
-	repos, err := t.GetAllRepos(ctx, 100)
-	if err != nil {
-		return "English", 69.420
-	}
-
-	langs := make(map[string]int)
-	for _, rep := range repos {
-		prev, exist := langs[rep.Language]
-		if !exist { prev = 0 }
-		langs[rep.Language] = prev + 1
-	}
-
-	ranking := make([]string, len(langs))
-	k := 0
-	for lang := range langs {
-		ranking[k] = lang
-		k++
-	}
-
-	sort.Slice(ranking, func(i, j int) bool {
-		lhs, rhs := langs[ranking[i]], langs[ranking[j]]
-		return lhs > rhs
-	})
-	if len(ranking) < 1 {
-		return "English", 69.420
-	}
-	return ranking[0], (float64(langs[ranking[0]]) / float64(len(repos))) * 100
 }

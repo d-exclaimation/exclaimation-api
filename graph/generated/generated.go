@@ -87,12 +87,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		Me      func(childComplexity int) int
-		Post    func(childComplexity int, id int) int
-		Posts   func(childComplexity int, limit int, by string) int
-		Profile func(childComplexity int) int
-		Repos   func(childComplexity int, limit int) int
-		TopLang func(childComplexity int) int
+		LatestPost func(childComplexity int) int
+		LatestRepo func(childComplexity int) int
+		Me         func(childComplexity int) int
+		Post       func(childComplexity int, id int) int
+		Posts      func(childComplexity int, limit int, by string) int
+		Profile    func(childComplexity int) int
+		Repos      func(childComplexity int, limit int) int
+		TopLang    func(childComplexity int) int
 	}
 
 	Repo struct {
@@ -119,8 +121,10 @@ type PostResolver interface {
 type QueryResolver interface {
 	Post(ctx context.Context, id int) (*model.Post, error)
 	Posts(ctx context.Context, limit int, by string) ([]*model.Post, error)
+	LatestPost(ctx context.Context) (*model.Post, error)
 	Profile(ctx context.Context) (*model.Profile, error)
 	Repos(ctx context.Context, limit int) ([]*model.Repo, error)
+	LatestRepo(ctx context.Context) (*model.Repo, error)
 	TopLang(ctx context.Context) (*model.Language, error)
 	Me(ctx context.Context) (*string, error)
 }
@@ -354,6 +358,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Profile.TwitterUsername(childComplexity), true
 
+	case "Query.latestPost":
+		if e.complexity.Query.LatestPost == nil {
+			break
+		}
+
+		return e.complexity.Query.LatestPost(childComplexity), true
+
+	case "Query.latestRepo":
+		if e.complexity.Query.LatestRepo == nil {
+			break
+		}
+
+		return e.complexity.Query.LatestRepo(childComplexity), true
+
 	case "Query.me":
 		if e.complexity.Query.Me == nil {
 			break
@@ -571,8 +589,10 @@ input PasswordInput {
 	{Name: "graph/schema.graphql", Input: `type Query {
     post(id: Int!): Post
     posts(limit: Int!, by: String!): [Post!]!
+    latestPost: Post!
     profile: Profile!
     repos(limit: Int!): [Repo!]!
+    latestRepo: Repo!
     topLang: Language!
     me: String
 }
@@ -1843,6 +1863,41 @@ func (ec *executionContext) _Query_posts(ctx context.Context, field graphql.Coll
 	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPostᚄ(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_latestPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().LatestPost(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_profile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -1918,6 +1973,41 @@ func (ec *executionContext) _Query_repos(ctx context.Context, field graphql.Coll
 	res := resTmp.([]*model.Repo)
 	fc.Result = res
 	return ec.marshalNRepo2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐRepoᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_latestRepo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().LatestRepo(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Repo)
+	fc.Result = res
+	return ec.marshalNRepo2ᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐRepo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_topLang(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3723,6 +3813,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "latestPost":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_latestPost(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "profile":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -3746,6 +3850,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_repos(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "latestRepo":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_latestRepo(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -4279,6 +4397,10 @@ func (ec *executionContext) marshalNProfile2ᚖgithubᚗcomᚋdᚑexclaimation�
 		return graphql.Null
 	}
 	return ec._Profile(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRepo2githubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐRepo(ctx context.Context, sel ast.SelectionSet, v model.Repo) graphql.Marshaler {
+	return ec._Repo(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNRepo2ᚕᚖgithubᚗcomᚋdᚑexclaimationᚋexclaimationᚑapiᚋgraphᚋmodelᚐRepoᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Repo) graphql.Marshaler {

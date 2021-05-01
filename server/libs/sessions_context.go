@@ -29,6 +29,7 @@ func fetchSessions(ctx context.Context) (*sessions.Session, error) {
 	return sess, nil
 }
 
+// GiveTheCookie send back cookie for sessions auth
 func GiveTheCookie(ctx context.Context, val string) (string, error) {
 	c, err := middleware.EchoFromContext(ctx)
 	if err != nil {
@@ -48,6 +49,7 @@ func GiveTheCookie(ctx context.Context, val string) (string, error) {
 	return "OK", err
 }
 
+// StealTheCookie grab the session token from client cookie jar
 func StealTheCookie(ctx context.Context, val string) (*string, error) {
 	sess, err := fetchSessions(ctx)
 	if err != nil {

@@ -27,7 +27,7 @@ func loggerFormat() string {
 	case config.Prod:
 		hexColor = "#fc038c"
 		method = "[ ${status} ${method} ]"
-		endpoint = " >> [ ${uri} ] from [${referer}]: ${latency_human} \n${user_agent}\n\n"
+		endpoint = " >> [ ${uri} ]: ${user_agent}\n"
 		break
 	case config.Maintenance:
 		header = "${time_rfc3339} |"
@@ -52,6 +52,7 @@ func loggerFormat() string {
 		endpoint
 }
 
+// EndPointLoggerMiddleware customize a logger for each request
 func EndPointLoggerMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return em.LoggerWithConfig(em.LoggerConfig{
 		Format: loggerFormat(),

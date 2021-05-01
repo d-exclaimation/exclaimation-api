@@ -8,9 +8,11 @@
 
 package pipes
 
+// IsolateStringPipe isolates String from one and another
 type IsolateStringPipe func(row string) bool
 type RowStringReducer func(prev []string, curr string) []string
 
+// IsolateReducer create reducer given all the pipes
 func IsolateReducer(isolations []IsolateStringPipe) RowStringReducer {
 	return func(prev []string, curr string) []string {
 		if len(prev) == 0 {

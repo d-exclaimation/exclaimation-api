@@ -24,6 +24,7 @@ func allowedMethods() []string {
 	}
 }
 
+// CorsMiddleware added whitelist of cors and the allowed methods
 func CorsMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return em.CORSWithConfig(em.CORSConfig{
 		Skipper:      em.DefaultSkipper,
