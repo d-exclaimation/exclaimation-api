@@ -89,6 +89,7 @@ func (t *RepoService) getRepos(ctx context.Context, limit int) (ent.Repos, error
 	res, err := t.client.Repo.
 		Query().
 		Limit(limit).
+		Order(ent.Asc(repo.FieldID)).
 		All(ctx)
 	if err != nil {
 		return nil, err
