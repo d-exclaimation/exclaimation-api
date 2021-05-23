@@ -58,7 +58,8 @@ func InvokeHandler(app *echo.Echo, handlers *AppHandlers) {
 	if config.GetServerMode() == config.Prod {
 		app.GET(entry, redirectConnection)
 		app.GET("/index.php", redirectConnection)
-		app.GET("/console", redirectConnection)
+		app.GET("/.env", redirectConnection)
+		app.GET("/console/", redirectConnection)
 		app.GET("/wp-admin", redirectConnection)
 	} else {
 		app.GET(entry, handlers.Playground)
