@@ -56,10 +56,15 @@ func InvokeHandler(app *echo.Echo, handlers *AppHandlers) {
 
 	// Assign playground only for non-prod, only (some people doesn't spam on the browser)
 	if config.GetServerMode() == config.Prod {
-		app.GET(entry, func(ctx echo.Context) error {
-			return ctx.Redirect(http.StatusPermanentRedirect, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-		})
+		app.GET(entry, redirectConnection)
+		app.GET("/index.php", redirectConnection)
+		app.GET("/console", redirectConnection)
+		app.GET("/wp-admin", redirectConnection)
 	} else {
 		app.GET(entry, handlers.Playground)
 	}
+}
+
+func redirectConnection(ctx echo.Context) error {
+	return ctx.Redirect(http.StatusPermanentRedirect, "https://www.youtube.com/watch?v=dQw4w9WgXcQ")
 }
