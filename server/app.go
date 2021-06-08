@@ -57,20 +57,20 @@ func InvokeHandler(app *echo.Echo, handlers *AppHandlers) {
 	// Assign playground only for non-prod, only (some people doesn't spam on the browser)
 	if config.GetServerMode() == config.Prod {
 		some := []string{
-			"login",
+			"/login",
 			entry,
-			"index.php",
+			"/index.php",
 			"/.env",
-			"console/",
-			"wp-admin",
-			"wp-login.php",
-			"manager/html",
-			"jenkins/login",
-			"include/makecvs.php",
-			"owa/",
+			"/console/",
+			"/wp-admin",
+			"/wp-login.php",
+			"/manager/html",
+			"/jenkins/login",
+			"/include/makecvs.php",
+			"/owa/",
 		}
 		for _, val := range some {
-			app.GET("/" + val, redirectConnection)
+			app.GET(val, redirectConnection)
 		}
 	} else {
 		app.GET(entry, handlers.Playground)
