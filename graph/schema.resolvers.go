@@ -15,10 +15,10 @@ import (
 )
 
 func (r *mutationResolver) LoginAsAdmin(ctx context.Context, options model.PasswordInput) (string, error) {
-	log.Printf("[INFO] Admin logged in, at %s\n", options.Time)
 	if config.GetKey() != options.Pass {
 		return "", e.InvalidKeyError()
 	}
+	log.Printf("[INFO] Admin logged in, at %s\n", options.Time)
 	return libs.GiveTheCookie(ctx, options.Pass)
 }
 
