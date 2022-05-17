@@ -17,10 +17,9 @@ var (
 	}
 	// PostsTable holds the schema information for the "posts" table.
 	PostsTable = &schema.Table{
-		Name:        "posts",
-		Columns:     PostsColumns,
-		PrimaryKey:  []*schema.Column{PostsColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{},
+		Name:       "posts",
+		Columns:    PostsColumns,
+		PrimaryKey: []*schema.Column{PostsColumns[0]},
 	}
 	// ProfilesColumns holds the columns for the "profiles" table.
 	ProfilesColumns = []*schema.Column{
@@ -38,10 +37,9 @@ var (
 	}
 	// ProfilesTable holds the schema information for the "profiles" table.
 	ProfilesTable = &schema.Table{
-		Name:        "profiles",
-		Columns:     ProfilesColumns,
-		PrimaryKey:  []*schema.Column{ProfilesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{},
+		Name:       "profiles",
+		Columns:    ProfilesColumns,
+		PrimaryKey: []*schema.Column{ProfilesColumns[0]},
 	}
 	// ReposColumns holds the columns for the "repos" table.
 	ReposColumns = []*schema.Column{
@@ -55,10 +53,9 @@ var (
 	}
 	// ReposTable holds the schema information for the "repos" table.
 	ReposTable = &schema.Table{
-		Name:        "repos",
-		Columns:     ReposColumns,
-		PrimaryKey:  []*schema.Column{ReposColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{},
+		Name:       "repos",
+		Columns:    ReposColumns,
+		PrimaryKey: []*schema.Column{ReposColumns[0]},
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{

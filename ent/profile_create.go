@@ -106,11 +106,17 @@ func (pc *ProfileCreate) Save(ctx context.Context) (*Profile, error) {
 				return nil, err
 			}
 			pc.mutation = mutation
-			node, err = pc.sqlSave(ctx)
+			if node, err = pc.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
 			mutation.done = true
 			return node, err
 		})
 		for i := len(pc.hooks) - 1; i >= 0; i-- {
+			if pc.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
 			mut = pc.hooks[i](mut)
 		}
 		if _, err := mut.Mutate(ctx, pc.mutation); err != nil {
@@ -129,62 +135,75 @@ func (pc *ProfileCreate) SaveX(ctx context.Context) *Profile {
 	return v
 }
 
+// Exec executes the query.
+func (pc *ProfileCreate) Exec(ctx context.Context) error {
+	_, err := pc.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (pc *ProfileCreate) ExecX(ctx context.Context) {
+	if err := pc.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
 // check runs all checks and user-defined validators on the builder.
 func (pc *ProfileCreate) check() error {
 	if _, ok := pc.mutation.Name(); !ok {
-		return &ValidationError{Name: "name", err: errors.New("ent: missing required field \"name\"")}
+		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Profile.name"`)}
 	}
 	if v, ok := pc.mutation.Name(); ok {
 		if err := profile.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Profile.name": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.AvatarURL(); !ok {
-		return &ValidationError{Name: "avatar_url", err: errors.New("ent: missing required field \"avatar_url\"")}
+		return &ValidationError{Name: "avatar_url", err: errors.New(`ent: missing required field "Profile.avatar_url"`)}
 	}
 	if _, ok := pc.mutation.GithubURL(); !ok {
-		return &ValidationError{Name: "github_url", err: errors.New("ent: missing required field \"github_url\"")}
+		return &ValidationError{Name: "github_url", err: errors.New(`ent: missing required field "Profile.github_url"`)}
 	}
 	if v, ok := pc.mutation.GithubURL(); ok {
 		if err := profile.GithubURLValidator(v); err != nil {
-			return &ValidationError{Name: "github_url", err: fmt.Errorf("ent: validator failed for field \"github_url\": %w", err)}
+			return &ValidationError{Name: "github_url", err: fmt.Errorf(`ent: validator failed for field "Profile.github_url": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.Location(); !ok {
-		return &ValidationError{Name: "location", err: errors.New("ent: missing required field \"location\"")}
+		return &ValidationError{Name: "location", err: errors.New(`ent: missing required field "Profile.location"`)}
 	}
 	if v, ok := pc.mutation.Location(); ok {
 		if err := profile.LocationValidator(v); err != nil {
-			return &ValidationError{Name: "location", err: fmt.Errorf("ent: validator failed for field \"location\": %w", err)}
+			return &ValidationError{Name: "location", err: fmt.Errorf(`ent: validator failed for field "Profile.location": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.Bio(); !ok {
-		return &ValidationError{Name: "bio", err: errors.New("ent: missing required field \"bio\"")}
+		return &ValidationError{Name: "bio", err: errors.New(`ent: missing required field "Profile.bio"`)}
 	}
 	if _, ok := pc.mutation.TwitterUsername(); !ok {
-		return &ValidationError{Name: "twitter_username", err: errors.New("ent: missing required field \"twitter_username\"")}
+		return &ValidationError{Name: "twitter_username", err: errors.New(`ent: missing required field "Profile.twitter_username"`)}
 	}
 	if _, ok := pc.mutation.PublicRepo(); !ok {
-		return &ValidationError{Name: "public_repo", err: errors.New("ent: missing required field \"public_repo\"")}
+		return &ValidationError{Name: "public_repo", err: errors.New(`ent: missing required field "Profile.public_repo"`)}
 	}
 	if _, ok := pc.mutation.Followers(); !ok {
-		return &ValidationError{Name: "followers", err: errors.New("ent: missing required field \"followers\"")}
+		return &ValidationError{Name: "followers", err: errors.New(`ent: missing required field "Profile.followers"`)}
 	}
 	if v, ok := pc.mutation.Followers(); ok {
 		if err := profile.FollowersValidator(v); err != nil {
-			return &ValidationError{Name: "followers", err: fmt.Errorf("ent: validator failed for field \"followers\": %w", err)}
+			return &ValidationError{Name: "followers", err: fmt.Errorf(`ent: validator failed for field "Profile.followers": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.Following(); !ok {
-		return &ValidationError{Name: "following", err: errors.New("ent: missing required field \"following\"")}
+		return &ValidationError{Name: "following", err: errors.New(`ent: missing required field "Profile.following"`)}
 	}
 	if v, ok := pc.mutation.Following(); ok {
 		if err := profile.FollowingValidator(v); err != nil {
-			return &ValidationError{Name: "following", err: fmt.Errorf("ent: validator failed for field \"following\": %w", err)}
+			return &ValidationError{Name: "following", err: fmt.Errorf(`ent: validator failed for field "Profile.following": %w`, err)}
 		}
 	}
 	if _, ok := pc.mutation.LastUpdated(); !ok {
-		return &ValidationError{Name: "last_updated", err: errors.New("ent: missing required field \"last_updated\"")}
+		return &ValidationError{Name: "last_updated", err: errors.New(`ent: missing required field "Profile.last_updated"`)}
 	}
 	return nil
 }
@@ -192,8 +211,8 @@ func (pc *ProfileCreate) check() error {
 func (pc *ProfileCreate) sqlSave(ctx context.Context) (*Profile, error) {
 	_node, _spec := pc.createSpec()
 	if err := sqlgraph.CreateNode(ctx, pc.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
@@ -324,19 +343,23 @@ func (pcb *ProfileCreateBulk) Save(ctx context.Context) ([]*Profile, error) {
 				if i < len(mutators)-1 {
 					_, err = mutators[i+1].Mutate(root, pcb.builders[i+1].mutation)
 				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
 					// Invoke the actual operation on the latest mutation in the chain.
-					if err = sqlgraph.BatchCreate(ctx, pcb.driver, &sqlgraph.BatchCreateSpec{Nodes: specs}); err != nil {
-						if cerr, ok := isSQLConstraintError(err); ok {
-							err = cerr
+					if err = sqlgraph.BatchCreate(ctx, pcb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
 						}
 					}
 				}
-				mutation.done = true
 				if err != nil {
 					return nil, err
 				}
-				id := specs[i].ID.Value.(int64)
-				nodes[i].ID = int(id)
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
 				return nodes[i], nil
 			})
 			for i := len(builder.hooks) - 1; i >= 0; i-- {
@@ -360,4 +383,17 @@ func (pcb *ProfileCreateBulk) SaveX(ctx context.Context) []*Profile {
 		panic(err)
 	}
 	return v
+}
+
+// Exec executes the query.
+func (pcb *ProfileCreateBulk) Exec(ctx context.Context) error {
+	_, err := pcb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (pcb *ProfileCreateBulk) ExecX(ctx context.Context) {
+	if err := pcb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

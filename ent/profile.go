@@ -44,11 +44,11 @@ func (*Profile) scanValues(columns []string) ([]interface{}, error) {
 	for i := range columns {
 		switch columns[i] {
 		case profile.FieldID, profile.FieldPublicRepo, profile.FieldFollowers, profile.FieldFollowing:
-			values[i] = &sql.NullInt64{}
+			values[i] = new(sql.NullInt64)
 		case profile.FieldName, profile.FieldAvatarURL, profile.FieldGithubURL, profile.FieldLocation, profile.FieldBio, profile.FieldTwitterUsername:
-			values[i] = &sql.NullString{}
+			values[i] = new(sql.NullString)
 		case profile.FieldLastUpdated:
-			values[i] = &sql.NullTime{}
+			values[i] = new(sql.NullTime)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Profile", columns[i])
 		}

@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math"
 
@@ -20,6 +19,7 @@ type RepoQuery struct {
 	config
 	limit      *int
 	offset     *int
+	unique     *bool
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Repo
@@ -43,6 +43,13 @@ func (rq *RepoQuery) Limit(limit int) *RepoQuery {
 // Offset adds an offset step to the query.
 func (rq *RepoQuery) Offset(offset int) *RepoQuery {
 	rq.offset = &offset
+	return rq
+}
+
+// Unique configures the query builder to filter duplicate records on query.
+// By default, unique is set to true, and can be disabled using this method.
+func (rq *RepoQuery) Unique(unique bool) *RepoQuery {
+	rq.unique = &unique
 	return rq
 }
 
@@ -98,7 +105,7 @@ func (rq *RepoQuery) FirstIDX(ctx context.Context) int {
 }
 
 // Only returns a single Repo entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when exactly one Repo entity is not found.
+// Returns a *NotSingularError when more than one Repo entity is found.
 // Returns a *NotFoundError when no Repo entities are found.
 func (rq *RepoQuery) Only(ctx context.Context) (*Repo, error) {
 	nodes, err := rq.Limit(2).All(ctx)
@@ -125,7 +132,7 @@ func (rq *RepoQuery) OnlyX(ctx context.Context) *Repo {
 }
 
 // OnlyID is like Only, but returns the only Repo ID in the query.
-// Returns a *NotSingularError when exactly one Repo ID is not found.
+// Returns a *NotSingularError when more than one Repo ID is found.
 // Returns a *NotFoundError when no entities are found.
 func (rq *RepoQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
@@ -234,8 +241,9 @@ func (rq *RepoQuery) Clone() *RepoQuery {
 		order:      append([]OrderFunc{}, rq.order...),
 		predicates: append([]predicate.Repo{}, rq.predicates...),
 		// clone intermediate query.
-		sql:  rq.sql.Clone(),
-		path: rq.path,
+		sql:    rq.sql.Clone(),
+		path:   rq.path,
+		unique: rq.unique,
 	}
 }
 
@@ -255,15 +263,17 @@ func (rq *RepoQuery) Clone() *RepoQuery {
 //		Scan(ctx, &v)
 //
 func (rq *RepoQuery) GroupBy(field string, fields ...string) *RepoGroupBy {
-	group := &RepoGroupBy{config: rq.config}
-	group.fields = append([]string{field}, fields...)
-	group.path = func(ctx context.Context) (prev *sql.Selector, err error) {
+	grbuild := &RepoGroupBy{config: rq.config}
+	grbuild.fields = append([]string{field}, fields...)
+	grbuild.path = func(ctx context.Context) (prev *sql.Selector, err error) {
 		if err := rq.prepareQuery(ctx); err != nil {
 			return nil, err
 		}
 		return rq.sqlQuery(ctx), nil
 	}
-	return group
+	grbuild.label = repo.Label
+	grbuild.flds, grbuild.scan = &grbuild.fields, grbuild.Scan
+	return grbuild
 }
 
 // Select allows the selection one or more fields/columns for the given query,
@@ -279,9 +289,12 @@ func (rq *RepoQuery) GroupBy(field string, fields ...string) *RepoGroupBy {
 //		Select(repo.FieldName).
 //		Scan(ctx, &v)
 //
-func (rq *RepoQuery) Select(field string, fields ...string) *RepoSelect {
-	rq.fields = append([]string{field}, fields...)
-	return &RepoSelect{RepoQuery: rq}
+func (rq *RepoQuery) Select(fields ...string) *RepoSelect {
+	rq.fields = append(rq.fields, fields...)
+	selbuild := &RepoSelect{RepoQuery: rq}
+	selbuild.label = repo.Label
+	selbuild.flds, selbuild.scan = &rq.fields, selbuild.Scan
+	return selbuild
 }
 
 func (rq *RepoQuery) prepareQuery(ctx context.Context) error {
@@ -300,22 +313,21 @@ func (rq *RepoQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (rq *RepoQuery) sqlAll(ctx context.Context) ([]*Repo, error) {
+func (rq *RepoQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Repo, error) {
 	var (
 		nodes = []*Repo{}
 		_spec = rq.querySpec()
 	)
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
-		node := &Repo{config: rq.config}
-		nodes = append(nodes, node)
-		return node.scanValues(columns)
+		return (*Repo).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []interface{}) error {
-		if len(nodes) == 0 {
-			return fmt.Errorf("ent: Assign called without calling ScanValues")
-		}
-		node := nodes[len(nodes)-1]
+		node := &Repo{config: rq.config}
+		nodes = append(nodes, node)
 		return node.assignValues(columns, values)
+	}
+	for i := range hooks {
+		hooks[i](ctx, _spec)
 	}
 	if err := sqlgraph.QueryNodes(ctx, rq.driver, _spec); err != nil {
 		return nil, err
@@ -328,6 +340,10 @@ func (rq *RepoQuery) sqlAll(ctx context.Context) ([]*Repo, error) {
 
 func (rq *RepoQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := rq.querySpec()
+	_spec.Node.Columns = rq.fields
+	if len(rq.fields) > 0 {
+		_spec.Unique = rq.unique != nil && *rq.unique
+	}
 	return sqlgraph.CountNodes(ctx, rq.driver, _spec)
 }
 
@@ -351,6 +367,9 @@ func (rq *RepoQuery) querySpec() *sqlgraph.QuerySpec {
 		},
 		From:   rq.sql,
 		Unique: true,
+	}
+	if unique := rq.unique; unique != nil {
+		_spec.Unique = *unique
 	}
 	if fields := rq.fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
@@ -377,7 +396,7 @@ func (rq *RepoQuery) querySpec() *sqlgraph.QuerySpec {
 	if ps := rq.order; len(ps) > 0 {
 		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
-				ps[i](selector, repo.ValidColumn)
+				ps[i](selector)
 			}
 		}
 	}
@@ -387,16 +406,23 @@ func (rq *RepoQuery) querySpec() *sqlgraph.QuerySpec {
 func (rq *RepoQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(rq.driver.Dialect())
 	t1 := builder.Table(repo.Table)
-	selector := builder.Select(t1.Columns(repo.Columns...)...).From(t1)
+	columns := rq.fields
+	if len(columns) == 0 {
+		columns = repo.Columns
+	}
+	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if rq.sql != nil {
 		selector = rq.sql
-		selector.Select(selector.Columns(repo.Columns...)...)
+		selector.Select(selector.Columns(columns...)...)
+	}
+	if rq.unique != nil && *rq.unique {
+		selector.Distinct()
 	}
 	for _, p := range rq.predicates {
 		p(selector)
 	}
 	for _, p := range rq.order {
-		p(selector, repo.ValidColumn)
+		p(selector)
 	}
 	if offset := rq.offset; offset != nil {
 		// limit is mandatory for offset clause. We start
@@ -412,6 +438,7 @@ func (rq *RepoQuery) sqlQuery(ctx context.Context) *sql.Selector {
 // RepoGroupBy is the group-by builder for Repo entities.
 type RepoGroupBy struct {
 	config
+	selector
 	fields []string
 	fns    []AggregateFunc
 	// intermediate query (i.e. traversal path).
@@ -435,209 +462,6 @@ func (rgb *RepoGroupBy) Scan(ctx context.Context, v interface{}) error {
 	return rgb.sqlScan(ctx, v)
 }
 
-// ScanX is like Scan, but panics if an error occurs.
-func (rgb *RepoGroupBy) ScanX(ctx context.Context, v interface{}) {
-	if err := rgb.Scan(ctx, v); err != nil {
-		panic(err)
-	}
-}
-
-// Strings returns list of strings from group-by.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) Strings(ctx context.Context) ([]string, error) {
-	if len(rgb.fields) > 1 {
-		return nil, errors.New("ent: RepoGroupBy.Strings is not achievable when grouping more than 1 field")
-	}
-	var v []string
-	if err := rgb.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// StringsX is like Strings, but panics if an error occurs.
-func (rgb *RepoGroupBy) StringsX(ctx context.Context) []string {
-	v, err := rgb.Strings(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// String returns a single string from a group-by query.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) String(ctx context.Context) (_ string, err error) {
-	var v []string
-	if v, err = rgb.Strings(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoGroupBy.Strings returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// StringX is like String, but panics if an error occurs.
-func (rgb *RepoGroupBy) StringX(ctx context.Context) string {
-	v, err := rgb.String(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Ints returns list of ints from group-by.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) Ints(ctx context.Context) ([]int, error) {
-	if len(rgb.fields) > 1 {
-		return nil, errors.New("ent: RepoGroupBy.Ints is not achievable when grouping more than 1 field")
-	}
-	var v []int
-	if err := rgb.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// IntsX is like Ints, but panics if an error occurs.
-func (rgb *RepoGroupBy) IntsX(ctx context.Context) []int {
-	v, err := rgb.Ints(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Int returns a single int from a group-by query.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) Int(ctx context.Context) (_ int, err error) {
-	var v []int
-	if v, err = rgb.Ints(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoGroupBy.Ints returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// IntX is like Int, but panics if an error occurs.
-func (rgb *RepoGroupBy) IntX(ctx context.Context) int {
-	v, err := rgb.Int(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Float64s returns list of float64s from group-by.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) Float64s(ctx context.Context) ([]float64, error) {
-	if len(rgb.fields) > 1 {
-		return nil, errors.New("ent: RepoGroupBy.Float64s is not achievable when grouping more than 1 field")
-	}
-	var v []float64
-	if err := rgb.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// Float64sX is like Float64s, but panics if an error occurs.
-func (rgb *RepoGroupBy) Float64sX(ctx context.Context) []float64 {
-	v, err := rgb.Float64s(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Float64 returns a single float64 from a group-by query.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) Float64(ctx context.Context) (_ float64, err error) {
-	var v []float64
-	if v, err = rgb.Float64s(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoGroupBy.Float64s returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// Float64X is like Float64, but panics if an error occurs.
-func (rgb *RepoGroupBy) Float64X(ctx context.Context) float64 {
-	v, err := rgb.Float64(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Bools returns list of bools from group-by.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) Bools(ctx context.Context) ([]bool, error) {
-	if len(rgb.fields) > 1 {
-		return nil, errors.New("ent: RepoGroupBy.Bools is not achievable when grouping more than 1 field")
-	}
-	var v []bool
-	if err := rgb.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// BoolsX is like Bools, but panics if an error occurs.
-func (rgb *RepoGroupBy) BoolsX(ctx context.Context) []bool {
-	v, err := rgb.Bools(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Bool returns a single bool from a group-by query.
-// It is only allowed when executing a group-by query with one field.
-func (rgb *RepoGroupBy) Bool(ctx context.Context) (_ bool, err error) {
-	var v []bool
-	if v, err = rgb.Bools(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoGroupBy.Bools returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// BoolX is like Bool, but panics if an error occurs.
-func (rgb *RepoGroupBy) BoolX(ctx context.Context) bool {
-	v, err := rgb.Bool(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
 func (rgb *RepoGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 	for _, f := range rgb.fields {
 		if !repo.ValidColumn(f) {
@@ -658,18 +482,28 @@ func (rgb *RepoGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 }
 
 func (rgb *RepoGroupBy) sqlQuery() *sql.Selector {
-	selector := rgb.sql
-	columns := make([]string, 0, len(rgb.fields)+len(rgb.fns))
-	columns = append(columns, rgb.fields...)
+	selector := rgb.sql.Select()
+	aggregation := make([]string, 0, len(rgb.fns))
 	for _, fn := range rgb.fns {
-		columns = append(columns, fn(selector, repo.ValidColumn))
+		aggregation = append(aggregation, fn(selector))
 	}
-	return selector.Select(columns...).GroupBy(rgb.fields...)
+	// If no columns were selected in a custom aggregation function, the default
+	// selection is the fields used for "group-by", and the aggregation functions.
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(rgb.fields)+len(rgb.fns))
+		for _, f := range rgb.fields {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	return selector.GroupBy(selector.Columns(rgb.fields...)...)
 }
 
 // RepoSelect is the builder for selecting fields of Repo entities.
 type RepoSelect struct {
 	*RepoQuery
+	selector
 	// intermediate query (i.e. traversal path).
 	sql *sql.Selector
 }
@@ -683,213 +517,12 @@ func (rs *RepoSelect) Scan(ctx context.Context, v interface{}) error {
 	return rs.sqlScan(ctx, v)
 }
 
-// ScanX is like Scan, but panics if an error occurs.
-func (rs *RepoSelect) ScanX(ctx context.Context, v interface{}) {
-	if err := rs.Scan(ctx, v); err != nil {
-		panic(err)
-	}
-}
-
-// Strings returns list of strings from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) Strings(ctx context.Context) ([]string, error) {
-	if len(rs.fields) > 1 {
-		return nil, errors.New("ent: RepoSelect.Strings is not achievable when selecting more than 1 field")
-	}
-	var v []string
-	if err := rs.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// StringsX is like Strings, but panics if an error occurs.
-func (rs *RepoSelect) StringsX(ctx context.Context) []string {
-	v, err := rs.Strings(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// String returns a single string from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) String(ctx context.Context) (_ string, err error) {
-	var v []string
-	if v, err = rs.Strings(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoSelect.Strings returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// StringX is like String, but panics if an error occurs.
-func (rs *RepoSelect) StringX(ctx context.Context) string {
-	v, err := rs.String(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Ints returns list of ints from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) Ints(ctx context.Context) ([]int, error) {
-	if len(rs.fields) > 1 {
-		return nil, errors.New("ent: RepoSelect.Ints is not achievable when selecting more than 1 field")
-	}
-	var v []int
-	if err := rs.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// IntsX is like Ints, but panics if an error occurs.
-func (rs *RepoSelect) IntsX(ctx context.Context) []int {
-	v, err := rs.Ints(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Int returns a single int from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) Int(ctx context.Context) (_ int, err error) {
-	var v []int
-	if v, err = rs.Ints(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoSelect.Ints returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// IntX is like Int, but panics if an error occurs.
-func (rs *RepoSelect) IntX(ctx context.Context) int {
-	v, err := rs.Int(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Float64s returns list of float64s from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) Float64s(ctx context.Context) ([]float64, error) {
-	if len(rs.fields) > 1 {
-		return nil, errors.New("ent: RepoSelect.Float64s is not achievable when selecting more than 1 field")
-	}
-	var v []float64
-	if err := rs.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// Float64sX is like Float64s, but panics if an error occurs.
-func (rs *RepoSelect) Float64sX(ctx context.Context) []float64 {
-	v, err := rs.Float64s(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Float64 returns a single float64 from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) Float64(ctx context.Context) (_ float64, err error) {
-	var v []float64
-	if v, err = rs.Float64s(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoSelect.Float64s returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// Float64X is like Float64, but panics if an error occurs.
-func (rs *RepoSelect) Float64X(ctx context.Context) float64 {
-	v, err := rs.Float64(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Bools returns list of bools from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) Bools(ctx context.Context) ([]bool, error) {
-	if len(rs.fields) > 1 {
-		return nil, errors.New("ent: RepoSelect.Bools is not achievable when selecting more than 1 field")
-	}
-	var v []bool
-	if err := rs.Scan(ctx, &v); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
-// BoolsX is like Bools, but panics if an error occurs.
-func (rs *RepoSelect) BoolsX(ctx context.Context) []bool {
-	v, err := rs.Bools(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
-// Bool returns a single bool from a selector. It is only allowed when selecting one field.
-func (rs *RepoSelect) Bool(ctx context.Context) (_ bool, err error) {
-	var v []bool
-	if v, err = rs.Bools(ctx); err != nil {
-		return
-	}
-	switch len(v) {
-	case 1:
-		return v[0], nil
-	case 0:
-		err = &NotFoundError{repo.Label}
-	default:
-		err = fmt.Errorf("ent: RepoSelect.Bools returned %d results when one was expected", len(v))
-	}
-	return
-}
-
-// BoolX is like Bool, but panics if an error occurs.
-func (rs *RepoSelect) BoolX(ctx context.Context) bool {
-	v, err := rs.Bool(ctx)
-	if err != nil {
-		panic(err)
-	}
-	return v
-}
-
 func (rs *RepoSelect) sqlScan(ctx context.Context, v interface{}) error {
 	rows := &sql.Rows{}
-	query, args := rs.sqlQuery().Query()
+	query, args := rs.sql.Query()
 	if err := rs.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
-}
-
-func (rs *RepoSelect) sqlQuery() sql.Querier {
-	selector := rs.sql
-	selector.Select(selector.Columns(rs.fields...)...)
-	return selector
 }

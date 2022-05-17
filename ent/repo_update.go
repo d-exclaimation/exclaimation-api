@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -21,9 +22,9 @@ type RepoUpdate struct {
 	mutation *RepoMutation
 }
 
-// Where adds a new predicate for the RepoUpdate builder.
+// Where appends a list predicates to the RepoUpdate builder.
 func (ru *RepoUpdate) Where(ps ...predicate.Repo) *RepoUpdate {
-	ru.mutation.predicates = append(ru.mutation.predicates, ps...)
+	ru.mutation.Where(ps...)
 	return ru
 }
 
@@ -94,6 +95,9 @@ func (ru *RepoUpdate) Save(ctx context.Context) (int, error) {
 			return affected, err
 		})
 		for i := len(ru.hooks) - 1; i >= 0; i-- {
+			if ru.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
 			mut = ru.hooks[i](mut)
 		}
 		if _, err := mut.Mutate(ctx, ru.mutation); err != nil {
@@ -129,12 +133,12 @@ func (ru *RepoUpdate) ExecX(ctx context.Context) {
 func (ru *RepoUpdate) check() error {
 	if v, ok := ru.mutation.Name(); ok {
 		if err := repo.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Repo.name": %w`, err)}
 		}
 	}
 	if v, ok := ru.mutation.RepoName(); ok {
 		if err := repo.RepoNameValidator(v); err != nil {
-			return &ValidationError{Name: "repo_name", err: fmt.Errorf("ent: validator failed for field \"repo_name\": %w", err)}
+			return &ValidationError{Name: "repo_name", err: fmt.Errorf(`ent: validator failed for field "Repo.repo_name": %w`, err)}
 		}
 	}
 	return nil
@@ -203,8 +207,8 @@ func (ru *RepoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if n, err = sqlgraph.UpdateNodes(ctx, ru.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{repo.Label}
-		} else if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -214,6 +218,7 @@ func (ru *RepoUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // RepoUpdateOne is the builder for updating a single Repo entity.
 type RepoUpdateOne struct {
 	config
+	fields   []string
 	hooks    []Hook
 	mutation *RepoMutation
 }
@@ -259,6 +264,13 @@ func (ruo *RepoUpdateOne) Mutation() *RepoMutation {
 	return ruo.mutation
 }
 
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (ruo *RepoUpdateOne) Select(field string, fields ...string) *RepoUpdateOne {
+	ruo.fields = append([]string{field}, fields...)
+	return ruo
+}
+
 // Save executes the query and returns the updated Repo entity.
 func (ruo *RepoUpdateOne) Save(ctx context.Context) (*Repo, error) {
 	var (
@@ -285,6 +297,9 @@ func (ruo *RepoUpdateOne) Save(ctx context.Context) (*Repo, error) {
 			return node, err
 		})
 		for i := len(ruo.hooks) - 1; i >= 0; i-- {
+			if ruo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
 			mut = ruo.hooks[i](mut)
 		}
 		if _, err := mut.Mutate(ctx, ruo.mutation); err != nil {
@@ -320,12 +335,12 @@ func (ruo *RepoUpdateOne) ExecX(ctx context.Context) {
 func (ruo *RepoUpdateOne) check() error {
 	if v, ok := ruo.mutation.Name(); ok {
 		if err := repo.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Repo.name": %w`, err)}
 		}
 	}
 	if v, ok := ruo.mutation.RepoName(); ok {
 		if err := repo.RepoNameValidator(v); err != nil {
-			return &ValidationError{Name: "repo_name", err: fmt.Errorf("ent: validator failed for field \"repo_name\": %w", err)}
+			return &ValidationError{Name: "repo_name", err: fmt.Errorf(`ent: validator failed for field "Repo.repo_name": %w`, err)}
 		}
 	}
 	return nil
@@ -344,9 +359,21 @@ func (ruo *RepoUpdateOne) sqlSave(ctx context.Context) (_node *Repo, err error) 
 	}
 	id, ok := ruo.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "ID", err: fmt.Errorf("missing Repo.ID for update")}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Repo.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
+	if fields := ruo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, repo.FieldID)
+		for _, f := range fields {
+			if !repo.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != repo.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
 	if ps := ruo.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -402,8 +429,8 @@ func (ruo *RepoUpdateOne) sqlSave(ctx context.Context) (_node *Repo, err error) 
 	if err = sqlgraph.UpdateNode(ctx, ruo.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{repo.Label}
-		} else if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}

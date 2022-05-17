@@ -36,11 +36,11 @@ func (*Repo) scanValues(columns []string) ([]interface{}, error) {
 	for i := range columns {
 		switch columns[i] {
 		case repo.FieldID:
-			values[i] = &sql.NullInt64{}
+			values[i] = new(sql.NullInt64)
 		case repo.FieldName, repo.FieldRepoName, repo.FieldURL, repo.FieldDescription, repo.FieldLanguage:
-			values[i] = &sql.NullString{}
+			values[i] = new(sql.NullString)
 		case repo.FieldLastUpdated:
-			values[i] = &sql.NullTime{}
+			values[i] = new(sql.NullTime)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Repo", columns[i])
 		}

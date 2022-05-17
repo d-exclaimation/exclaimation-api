@@ -97,6 +97,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
+		ctx:     ctx,
 		config:  cfg,
 		Post:    NewPostClient(cfg),
 		Profile: NewProfileClient(cfg),
@@ -201,7 +202,9 @@ func (c *PostClient) DeleteOneID(id int) *PostDeleteOne {
 
 // Query returns a query builder for Post.
 func (c *PostClient) Query() *PostQuery {
-	return &PostQuery{config: c.config}
+	return &PostQuery{
+		config: c.config,
+	}
 }
 
 // Get returns a Post entity by its id.
@@ -289,7 +292,9 @@ func (c *ProfileClient) DeleteOneID(id int) *ProfileDeleteOne {
 
 // Query returns a query builder for Profile.
 func (c *ProfileClient) Query() *ProfileQuery {
-	return &ProfileQuery{config: c.config}
+	return &ProfileQuery{
+		config: c.config,
+	}
 }
 
 // Get returns a Profile entity by its id.
@@ -377,7 +382,9 @@ func (c *RepoClient) DeleteOneID(id int) *RepoDeleteOne {
 
 // Query returns a query builder for Repo.
 func (c *RepoClient) Query() *RepoQuery {
-	return &RepoQuery{config: c.config}
+	return &RepoQuery{
+		config: c.config,
+	}
 }
 
 // Get returns a Repo entity by its id.

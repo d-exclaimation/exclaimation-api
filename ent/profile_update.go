@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -21,9 +22,9 @@ type ProfileUpdate struct {
 	mutation *ProfileMutation
 }
 
-// Where adds a new predicate for the ProfileUpdate builder.
+// Where appends a list predicates to the ProfileUpdate builder.
 func (pu *ProfileUpdate) Where(ps ...predicate.Profile) *ProfileUpdate {
-	pu.mutation.predicates = append(pu.mutation.predicates, ps...)
+	pu.mutation.Where(ps...)
 	return pu
 }
 
@@ -139,6 +140,9 @@ func (pu *ProfileUpdate) Save(ctx context.Context) (int, error) {
 			return affected, err
 		})
 		for i := len(pu.hooks) - 1; i >= 0; i-- {
+			if pu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
 			mut = pu.hooks[i](mut)
 		}
 		if _, err := mut.Mutate(ctx, pu.mutation); err != nil {
@@ -174,27 +178,27 @@ func (pu *ProfileUpdate) ExecX(ctx context.Context) {
 func (pu *ProfileUpdate) check() error {
 	if v, ok := pu.mutation.Name(); ok {
 		if err := profile.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Profile.name": %w`, err)}
 		}
 	}
 	if v, ok := pu.mutation.GithubURL(); ok {
 		if err := profile.GithubURLValidator(v); err != nil {
-			return &ValidationError{Name: "github_url", err: fmt.Errorf("ent: validator failed for field \"github_url\": %w", err)}
+			return &ValidationError{Name: "github_url", err: fmt.Errorf(`ent: validator failed for field "Profile.github_url": %w`, err)}
 		}
 	}
 	if v, ok := pu.mutation.Location(); ok {
 		if err := profile.LocationValidator(v); err != nil {
-			return &ValidationError{Name: "location", err: fmt.Errorf("ent: validator failed for field \"location\": %w", err)}
+			return &ValidationError{Name: "location", err: fmt.Errorf(`ent: validator failed for field "Profile.location": %w`, err)}
 		}
 	}
 	if v, ok := pu.mutation.Followers(); ok {
 		if err := profile.FollowersValidator(v); err != nil {
-			return &ValidationError{Name: "followers", err: fmt.Errorf("ent: validator failed for field \"followers\": %w", err)}
+			return &ValidationError{Name: "followers", err: fmt.Errorf(`ent: validator failed for field "Profile.followers": %w`, err)}
 		}
 	}
 	if v, ok := pu.mutation.Following(); ok {
 		if err := profile.FollowingValidator(v); err != nil {
-			return &ValidationError{Name: "following", err: fmt.Errorf("ent: validator failed for field \"following\": %w", err)}
+			return &ValidationError{Name: "following", err: fmt.Errorf(`ent: validator failed for field "Profile.following": %w`, err)}
 		}
 	}
 	return nil
@@ -312,8 +316,8 @@ func (pu *ProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if n, err = sqlgraph.UpdateNodes(ctx, pu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{profile.Label}
-		} else if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -323,6 +327,7 @@ func (pu *ProfileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // ProfileUpdateOne is the builder for updating a single Profile entity.
 type ProfileUpdateOne struct {
 	config
+	fields   []string
 	hooks    []Hook
 	mutation *ProfileMutation
 }
@@ -413,6 +418,13 @@ func (puo *ProfileUpdateOne) Mutation() *ProfileMutation {
 	return puo.mutation
 }
 
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (puo *ProfileUpdateOne) Select(field string, fields ...string) *ProfileUpdateOne {
+	puo.fields = append([]string{field}, fields...)
+	return puo
+}
+
 // Save executes the query and returns the updated Profile entity.
 func (puo *ProfileUpdateOne) Save(ctx context.Context) (*Profile, error) {
 	var (
@@ -439,6 +451,9 @@ func (puo *ProfileUpdateOne) Save(ctx context.Context) (*Profile, error) {
 			return node, err
 		})
 		for i := len(puo.hooks) - 1; i >= 0; i-- {
+			if puo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
 			mut = puo.hooks[i](mut)
 		}
 		if _, err := mut.Mutate(ctx, puo.mutation); err != nil {
@@ -474,27 +489,27 @@ func (puo *ProfileUpdateOne) ExecX(ctx context.Context) {
 func (puo *ProfileUpdateOne) check() error {
 	if v, ok := puo.mutation.Name(); ok {
 		if err := profile.NameValidator(v); err != nil {
-			return &ValidationError{Name: "name", err: fmt.Errorf("ent: validator failed for field \"name\": %w", err)}
+			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Profile.name": %w`, err)}
 		}
 	}
 	if v, ok := puo.mutation.GithubURL(); ok {
 		if err := profile.GithubURLValidator(v); err != nil {
-			return &ValidationError{Name: "github_url", err: fmt.Errorf("ent: validator failed for field \"github_url\": %w", err)}
+			return &ValidationError{Name: "github_url", err: fmt.Errorf(`ent: validator failed for field "Profile.github_url": %w`, err)}
 		}
 	}
 	if v, ok := puo.mutation.Location(); ok {
 		if err := profile.LocationValidator(v); err != nil {
-			return &ValidationError{Name: "location", err: fmt.Errorf("ent: validator failed for field \"location\": %w", err)}
+			return &ValidationError{Name: "location", err: fmt.Errorf(`ent: validator failed for field "Profile.location": %w`, err)}
 		}
 	}
 	if v, ok := puo.mutation.Followers(); ok {
 		if err := profile.FollowersValidator(v); err != nil {
-			return &ValidationError{Name: "followers", err: fmt.Errorf("ent: validator failed for field \"followers\": %w", err)}
+			return &ValidationError{Name: "followers", err: fmt.Errorf(`ent: validator failed for field "Profile.followers": %w`, err)}
 		}
 	}
 	if v, ok := puo.mutation.Following(); ok {
 		if err := profile.FollowingValidator(v); err != nil {
-			return &ValidationError{Name: "following", err: fmt.Errorf("ent: validator failed for field \"following\": %w", err)}
+			return &ValidationError{Name: "following", err: fmt.Errorf(`ent: validator failed for field "Profile.following": %w`, err)}
 		}
 	}
 	return nil
@@ -513,9 +528,21 @@ func (puo *ProfileUpdateOne) sqlSave(ctx context.Context) (_node *Profile, err e
 	}
 	id, ok := puo.mutation.ID()
 	if !ok {
-		return nil, &ValidationError{Name: "ID", err: fmt.Errorf("missing Profile.ID for update")}
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Profile.id" for update`)}
 	}
 	_spec.Node.ID.Value = id
+	if fields := puo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, profile.FieldID)
+		for _, f := range fields {
+			if !profile.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != profile.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
 	if ps := puo.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -620,8 +647,8 @@ func (puo *ProfileUpdateOne) sqlSave(ctx context.Context) (_node *Profile, err e
 	if err = sqlgraph.UpdateNode(ctx, puo.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{profile.Label}
-		} else if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
