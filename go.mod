@@ -13,7 +13,7 @@ require (
 	github.com/hashicorp/hcl/v2 v2.12.0 // indirect
 	github.com/joho/godotenv v1.4.0
 	github.com/labstack/echo-contrib v0.12.0
-	github.com/labstack/echo/v4 v4.7.2
+	github.com/labstack/echo/v4 v4.9.0
 	github.com/lib/pq v1.10.6
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/vektah/gqlparser/v2 v2.4.2
